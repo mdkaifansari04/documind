@@ -7,7 +7,14 @@ from unittest.mock import MagicMock, patch
 
 from app.routing import LLMProfile
 from app.routers.query import QueryRouter
-from app.models.schemas import InstanceScopedQueryRequest, InstanceScopedSearchRequest, QueryRequest
+from app.models.schemas import (
+    AdvancedQueryRequest,
+    AdvancedSearchRequest,
+    HybridConfig,
+    InstanceScopedQueryRequest,
+    InstanceScopedSearchRequest,
+    QueryRequest,
+)
 
 
 class QueryRouterTests(unittest.TestCase):
@@ -132,6 +139,127 @@ class QueryRouterTests(unittest.TestCase):
         self.assertEqual(response["namespace_id"], "company_docs")
         self.assertEqual(response["answer"], "answer")
         fake_store.find_kb_by_namespace.assert_called_once_with("inst-1", "company_docs")
+
+    def test_search_advanced_semantic(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-4",
+            "collection_name": "kb_collection_4",
+            "embedding_model": "minilm",
+        }
+
+        fake_retrieval = MagicMock()
+        fake_retrieval.build_filters.return_value = {"x": 1}
+        fake_retrieval.search_knowledge_base.return_value = [
+            {"id": 1, "text": "chunk", "score": 0.9, "source_ref": "x", "chunk_index": 0, "resource_id": "r"}
+        ]
+
+        fake_container = SimpleNamespace(
+            store=fake_store,
+            retrieval=fake_retrieval,
+            routing=MagicMock(),
+            agent=MagicMock(),
+        )
+
+        body = AdvancedSearchRequest(
+            instance_id="inst-1",
+            namespace_id="company_docs",
+            query="deploy flow",
+            mode="semantic",
+            top_k=3,
+        )
+        router = QueryRouter()
+
+        with patch("app.routers.query.container", fake_container):
+            response = asyncio.run(router.search_advanced(body))
+
+        self.assertEqual(response["mode"], "semantic")
+        self.assertEqual(response["instance_id"], "inst-1")
+        self.assertEqual(len(response["results"]), 1)
+        fake_retrieval.build_filters.assert_called_once()
+        fake_retrieval.search_knowledge_base.assert_called_once()
+
+    def test_search_advanced_hybrid(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-5",
+            "collection_name": "kb_collection_5",
+            "embedding_model": "minilm",
+        }
+
+        fake_retrieval = MagicMock()
+        fake_retrieval.build_filters.return_value = None
+        fake_retrieval.search_knowledge_base_hybrid.return_value = [
+            {"id": 1, "text": "chunk", "score": 0.9, "source_ref": "x", "chunk_index": 0, "resource_id": "r"}
+        ]
+
+        fake_container = SimpleNamespace(
+            store=fake_store,
+            retrieval=fake_retrieval,
+            routing=MagicMock(),
+            agent=MagicMock(),
+        )
+
+        body = AdvancedSearchRequest(
+            instance_id="inst-1",
+            namespace_id="company_docs",
+            query="deploy flow",
+            mode="hybrid",
+            hybrid=HybridConfig(method="rrf", dense_weight=0.7, keyword_weight=0.3),
+            top_k=3,
+        )
+        router = QueryRouter()
+
+        with patch("app.routers.query.container", fake_container):
+            response = asyncio.run(router.search_advanced(body))
+
+        self.assertEqual(response["mode"], "hybrid")
+        fake_retrieval.search_knowledge_base_hybrid.assert_called_once()
+
+    def test_query_advanced(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-6",
+            "collection_name": "kb_collection_6",
+            "embedding_model": "minilm",
+            "llm_profile": "balanced",
+        }
+        fake_store.create_query_log.return_value = {}
+
+        fake_retrieval = MagicMock()
+        fake_retrieval.build_filters.return_value = None
+        fake_retrieval.search_knowledge_base.return_value = [
+            {"id": 1, "text": "chunk", "score": 0.9, "source_ref": "x", "chunk_index": 0, "resource_id": "r"}
+        ]
+
+        fake_routing = MagicMock()
+        fake_routing.recommend_llm_profile.return_value = LLMProfile.BALANCED
+
+        fake_agent = MagicMock()
+        fake_agent.answer.return_value = "advanced answer"
+
+        fake_container = SimpleNamespace(
+            store=fake_store,
+            retrieval=fake_retrieval,
+            routing=fake_routing,
+            agent=fake_agent,
+        )
+
+        body = AdvancedQueryRequest(
+            instance_id="inst-1",
+            namespace_id="company_docs",
+            question="How do we deploy?",
+            mode="semantic",
+            top_k=2,
+        )
+        router = QueryRouter()
+
+        with patch("app.routers.query.container", fake_container):
+            response = asyncio.run(router.query_advanced(body))
+
+        self.assertEqual(response["answer"], "advanced answer")
+        self.assertEqual(response["mode"], "semantic")
+        fake_store.create_query_log.assert_called_once()
 
 
 if __name__ == "__main__":
