@@ -64,6 +64,24 @@ class VectorDBClient:
                 filter=filters,
             )
 
+    def scroll_points(
+        self,
+        collection_name: str,
+        *,
+        limit: int = 100,
+        offset: int | str | None = None,
+        filters: Any = None,
+    ) -> tuple[list[Any], int | str | None]:
+        with self._client() as client:
+            return client.points.scroll(
+                collection_name,
+                limit=limit,
+                offset=offset,
+                filter=filters,
+                with_payload=True,
+                with_vectors=False,
+            )
+
     def count_points(self, collection_name: str) -> int:
         with self._client() as client:
             return client.points.count(collection_name)
