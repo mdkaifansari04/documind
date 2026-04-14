@@ -22,7 +22,9 @@ class CreateKnowledgeBaseRequest(BaseModel):
     instance_id: str
     name: str
     namespace_id: str = "company_docs"
-    embedding_model: str = "minilm"
+    embedding_model: str | None = None
+    embedding_profile: str | None = None
+    llm_profile: str | None = None
     distance_metric: str = "cosine"
 
 
@@ -33,7 +35,9 @@ class KnowledgeBaseResponse(BaseModel):
     namespace_id: str
     collection_name: str
     embedding_model: str
+    embedding_profile: str
     embedding_dim: int
+    llm_profile: str
     distance_metric: str
     status: str
     created_at: str
@@ -50,6 +54,8 @@ class QueryRequest(BaseModel):
     kb_id: str
     question: str
     top_k: int = 5
+    llm_profile: str | None = None
+    latency_sensitive: bool = False
 
 
 class SearchResult(BaseModel):

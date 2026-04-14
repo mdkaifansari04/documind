@@ -4,8 +4,9 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.embeddings import EmbeddingModel, embedding_router
+from app.embeddings import EmbeddingModel, EmbeddingProfile, embedding_router
 from app.models.schemas import CreateKnowledgeBaseRequest
+from app.routing import LLMProfile
 from app.runtime import container, make_collection_name
 
 
@@ -21,10 +22,33 @@ class KnowledgeBaseRouter:
         if not instance:
             raise HTTPException(status_code=404, detail="Instance not found")
 
+        model: EmbeddingModel
+        profile: EmbeddingProfile
         try:
-            model = EmbeddingModel(body.embedding_model)
+            if body.embedding_profile:
+                profile = EmbeddingProfile(body.embedding_profile)
+                model = embedding_router.model_for_profile(profile)
+                if body.embedding_model and EmbeddingModel(body.embedding_model) != model:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="embedding_model does not match embedding_profile",
+                    )
+            elif body.embedding_model:
+                model = EmbeddingModel(body.embedding_model)
+                profile = embedding_router.default_profile_for_model(model)
+            else:
+                profile = container.routing.recommend_embedding_profile(
+                    source_type="text",
+                    hint_text=body.namespace_id,
+                )
+                model = embedding_router.model_for_profile(profile)
         except ValueError as exc:
-            raise HTTPException(status_code=400, detail="Invalid embedding_model") from exc
+            raise HTTPException(status_code=400, detail="Invalid embedding model/profile value") from exc
+
+        try:
+            llm_profile = LLMProfile(body.llm_profile) if body.llm_profile else LLMProfile.BALANCED
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Invalid llm_profile") from exc
 
         kb_id = str(uuid.uuid4())
         dim = embedding_router.dimension_for(model)
@@ -43,7 +67,9 @@ class KnowledgeBaseRouter:
             namespace_id=body.namespace_id,
             collection_name=collection_name,
             embedding_model=model.value,
+            embedding_profile=profile.value,
             embedding_dim=dim,
+            llm_profile=llm_profile.value,
             distance_metric=body.distance_metric,
         )
 
