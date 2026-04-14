@@ -125,20 +125,88 @@ Run in this order.
 
 - Save `id` as `kb_id`.
 
-### Step 4: Ingest resource (form-data)
+### Step 4: Ingest resource (`POST /resources`)
+
+Targeting options:
+
+- Option 1: pass `kb_id` directly
+- Option 2: pass `instance_id + namespace_id` and let backend resolve the KB
+- If no KB exists for that instance+namespace, ingest will auto-create one and proceed
+
+#### Option A: JSON ingest (best for inline text/markdown)
+
+- Method: `POST`
+- URL: `http://localhost:8000/resources`
+- Headers:
+  - `Content-Type: application/json`
+- Body (JSON):
+
+```json
+{
+  "kb_id": "<kb_id>",
+  "source_type": "text",
+  "content": "Payments deploy flow: push main, CI builds image, release to prod.",
+  "source_ref": "deploy-notes.txt",
+  "user_id": "user_123",
+  "session_id": "sess_001"
+}
+```
+
+Alternative (no `kb_id` in request):
+
+```json
+{
+  "instance_id": "<instance_id>",
+  "namespace_id": "company_docs",
+  "source_type": "text",
+  "content": "Payments deploy flow: push main, CI builds image, release to prod.",
+  "source_ref": "deploy-notes.txt"
+}
+```
+
+Markdown inline example:
+
+```json
+{
+  "kb_id": "<kb_id>",
+  "source_type": "markdown",
+  "content": "# Deploy Notes\n1. Merge to main\n2. Wait for CI\n3. Release",
+  "source_ref": "deploy-notes.md"
+}
+```
+
+Expected response:
+
+```json
+{
+  "status": "success",
+  "resource_id": "2a0b6f9f-9d80-4b3a-9ff5-7d7130a0c3d9",
+  "chunks_indexed": 1
+}
+```
+
+#### Option B: multipart/form-data ingest (best for file upload)
 
 - Method: `POST`
 - URL: `http://localhost:8000/resources`
 - Body type: `form-data`
 - Fields:
-  - `kb_id` = `<kb_id>`
-  - `source_type` = `text`
-  - `content` = `Payments deploy flow: push main, CI builds image, release to prod.`
-  - `source_ref` = `deploy-notes.txt`
-  - `user_id` = `user_123` (optional)
-  - `session_id` = `sess_001` (optional)
+  - `kb_id` = `<kb_id>` OR (`instance_id` + optional `namespace_id`)
+  - `source_type` = `markdown` (or `pdf`, `text`, `url`)
+  - `file` = upload local file (e.g. `notes.md`)
+  - `source_ref` = optional override of filename
+  - `user_id` = optional
+  - `session_id` = optional
 
-- Expect: `{"status":"success", "resource_id":"...", "chunks_indexed": >0}`
+Expected response:
+
+```json
+{
+  "status": "success",
+  "resource_id": "7dbbf06f-912d-468f-9493-c1dd808bd28c",
+  "chunks_indexed": 3
+}
+```
 
 ### Step 5: List resources
 
@@ -248,6 +316,15 @@ For PDF ingestion in `/resources`:
 - `source_type = pdf`
 - Attach file in `file` form-data field
 - Do not send `content` manually (server will base64 it internally)
+
+### Ingesting Text / Markdown (JSON)
+
+For inline content ingestion in `/resources`:
+
+- Set header `Content-Type: application/json`
+- Use `source_type = text` or `source_type = markdown`
+- Put your full body in `content`
+- Always pass `kb_id` from KB creation response
 
 ### Ingesting URL
 

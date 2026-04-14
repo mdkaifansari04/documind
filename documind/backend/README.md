@@ -35,10 +35,12 @@ uvicorn app.main:app --reload --port 8000
 - `POST /knowledge-bases`
 - `GET /knowledge-bases`
 - `GET /knowledge-bases/{kb_id}`
-- `POST /resources` (multipart)
-- `GET /resources?kb_id=...`
+- `POST /resources` (multipart for file uploads, JSON for text/markdown)
+- `GET /resources?kb_id=...` or `GET /resources?instance_id=...&namespace_id=...`
 - `POST /search`
 - `POST /query`
+- `POST /search/instance` (search without passing `kb_id`)
+- `POST /query/instance` (query without passing `kb_id`)
 - `POST /memory/ingest`
 - `POST /memory/query`
 - `GET /observability/scores?kb_id=...&window=1h`
@@ -49,6 +51,47 @@ uvicorn app.main:app --reload --port 8000
 - Control-plane storage currently runs on SQLite for speed (`documind.db`).
 - Prisma schema is included under `prisma/schema.prisma` for PostgreSQL transition.
 - Vector storage/search uses Actian VectorAI DB on `localhost:50051`.
+
+## Resource Ingestion Formats
+
+- `multipart/form-data`:
+  - Use for file uploads (`pdf`, `markdown`, `text`, etc.)
+  - Fields: `source_type`, optional target (`kb_id` OR `instance_id + namespace_id`), optional `content`, optional `file`, optional `source_ref`, `user_id`, `session_id`
+- `application/json`:
+  - Use for inline text payloads
+  - Fields: `source_type`, `content`, optional target (`kb_id` OR `instance_id + namespace_id`), optional `source_ref`, `user_id`, `session_id`
+
+## No `kb_id` Client Flow
+
+Use instance + namespace and let the backend resolve KB internally:
+
+```json
+POST /resources
+{
+  "instance_id": "inst_123",
+  "namespace_id": "company_docs",
+  "source_type": "text",
+  "content": "Deploy flow: merge main, wait for CI, release.",
+  "source_ref": "deploy-notes.txt"
+}
+```
+
+If KB for the given `instance_id + namespace_id` does not exist, `/resources` will auto-create one with default settings and continue ingestion.
+
+```json
+POST /search/instance
+{
+  "instance_id": "inst_123",
+  "namespace_id": "company_docs",
+  "query": "how do we deploy",
+  "top_k": 5
+}
+```
+
+## Advanced Retrieval + Hardening Plan
+
+- Detailed design and implementation roadmap:
+  - `documind/backend/ADVANCED_RETRIEVAL_README.md`
 
 ## Current Phase Decisions
 
