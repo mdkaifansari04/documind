@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException
 
 from app.config import settings
 from app.embeddings import EmbeddingModel, embedding_router
+from app.routing import LLMProfile
 from app.models.schemas import MemoryIngestRequest, MemoryQueryRequest
 from app.runtime import container, make_collection_name
 
@@ -40,7 +41,9 @@ class MemoryRouter:
             namespace_id=settings.memory_namespace,
             collection_name=collection_name,
             embedding_model=EmbeddingModel.MINILM.value,
+            embedding_profile=embedding_router.default_profile_for_model(EmbeddingModel.MINILM).value,
             embedding_dim=dim,
+            llm_profile=LLMProfile.FAST.value,
             distance_metric="cosine",
         )
 

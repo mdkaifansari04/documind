@@ -21,12 +21,13 @@ class QueryRouter:
         if not kb:
             raise HTTPException(status_code=404, detail="Knowledge base not found")
 
+        model = EmbeddingModel(kb["embedding_model"])
         results = await asyncio.to_thread(
             container.retrieval.search_knowledge_base,
             collection_name=kb["collection_name"],
             query=body.query,
             top_k=body.top_k,
-            embedding_model=EmbeddingModel(kb["embedding_model"]),
+            embedding_model=model,
         )
         return {"kb_id": body.kb_id, "results": results}
 
@@ -35,15 +36,27 @@ class QueryRouter:
         if not kb:
             raise HTTPException(status_code=404, detail="Knowledge base not found")
 
+        model = EmbeddingModel(kb["embedding_model"])
         start = time.time()
         sources = await asyncio.to_thread(
             container.retrieval.search_knowledge_base,
             collection_name=kb["collection_name"],
             query=body.question,
             top_k=body.top_k,
-            embedding_model=EmbeddingModel(kb["embedding_model"]),
+            embedding_model=model,
         )
-        answer = await asyncio.to_thread(container.agent.answer, question=body.question, sources=sources)
+        llm_profile = container.routing.recommend_llm_profile(
+            question=body.question,
+            explicit_profile=body.llm_profile or kb.get("llm_profile"),
+            retrieved_source_count=len(sources),
+            latency_sensitive=body.latency_sensitive,
+        )
+        answer = await asyncio.to_thread(
+            container.agent.answer,
+            question=body.question,
+            sources=sources,
+            llm_profile=llm_profile,
+        )
         response_ms = int((time.time() - start) * 1000)
 
         retrieval_score = sum(item["score"] for item in sources) / len(sources) if sources else 0.0
@@ -61,6 +74,7 @@ class QueryRouter:
             "answer": answer,
             "sources": sources,
             "response_ms": response_ms,
+            "llm_profile": llm_profile.value,
         }
 
 
