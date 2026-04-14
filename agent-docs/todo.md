@@ -110,23 +110,23 @@ Use this checklist at the end of every coding cycle.
 - [x] Search/query APIs
 - [x] Basic observability endpoints
 
-### Phase 1.8.5: Advanced Retrieval + Hardening Prep (ACTIVE)
+### Phase 1.8.5: Advanced Retrieval + Hardening Prep (COMPLETE)
 
 - [x] Add advanced schemas in `documind/backend/app/models/schemas.py`
   - `FilterClause`, `FilterSpec`, `HybridConfig`
   - `AdvancedSearchRequest`, `AdvancedQueryRequest`
-- [ ] Add instance-scoped KB resolver for advanced routes (`instance_id + namespace_id -> kb`)
-- [ ] Implement filter translator in `documind/backend/app/services/retrieval.py` (JSON -> Actian `FilterBuilder`)
-- [ ] Implement hybrid fusion mode (`rrf` and optional `dbsf`) in retrieval service
-- [ ] Add advanced instance-scoped routes in `documind/backend/app/routers/query.py`
+- [x] Add instance-scoped KB resolver for advanced routes (`instance_id + namespace_id -> kb`)
+- [x] Implement filter translator in `documind/backend/app/services/retrieval.py` (JSON -> Actian `FilterBuilder`)
+- [x] Implement hybrid fusion mode (`rrf` and optional `dbsf`) in retrieval service
+- [x] Add advanced instance-scoped routes in `documind/backend/app/routers/query.py`
   - `POST /search/advanced`
   - `POST /query/advanced`
-- [ ] Add tests for:
+- [x] Add tests for:
   - filter translation
   - hybrid fusion ranking behavior
   - advanced route payload validation + response shape
-- [ ] Update Postman collection with advanced requests
-- [ ] Update docs (`documind/backend/README.md`, `documind/backend/IMPLEMENTATION_TEST_GUIDE.md`)
+- [x] Update Postman collection with advanced requests
+- [x] Update docs (`documind/backend/README.md`, `documind/backend/IMPLEMENTATION_TEST_GUIDE.md`)
 
 ### Phase 2: Agent Integration (LOCKED UNTIL PHASE 1.8.5 READY)
 
@@ -145,35 +145,37 @@ Use this checklist at the end of every coding cycle.
 
 ## 4.1 Phase 1.8.5 Executable Tasks (Single Source of Truth)
 
+Status: COMPLETE (2026-04-14)
+
 Execute in order:
 
-1. `P185-T1` Schema and model wiring
+1. `P185-T1` Schema and model wiring [Done]
    - Update `documind/backend/app/models/schemas.py`
    - Add request models for advanced search/query with instance-scoped target
    - Completion check: imports succeed and test module discovery still passes
 
-2. `P185-T2` Retrieval filter translator
+2. `P185-T2` Retrieval filter translator [Done]
    - Update `documind/backend/app/services/retrieval.py`
    - Build converter from API filter clauses to Actian `FilterBuilder`
    - Completion check: unit tests for `eq`, `any_of`, `text`, `between`, range ops
 
-3. `P185-T3` Hybrid fusion retrieval
+3. `P185-T3` Hybrid fusion retrieval [Done]
    - Update `documind/backend/app/services/retrieval.py`
    - Implement semantic + keyword retrieval and fuse ranks with `rrf` (then `dbsf`)
    - Completion check: deterministic fusion test for ranking output
 
-4. `P185-T4` Advanced query routes
+4. `P185-T4` Advanced query routes [Done]
    - Update `documind/backend/app/routers/query.py`
    - Add `POST /search/advanced` and `POST /query/advanced` using `instance_id + namespace_id`
    - Completion check: route tests pass and no required client `kb_id`
 
-5. `P185-T5` Docs and Postman sync
+5. `P185-T5` Docs and Postman sync [Done]
    - Update `documind/backend/postman/collection-v1.json`
    - Update `documind/backend/README.md`
    - Update `documind/backend/IMPLEMENTATION_TEST_GUIDE.md`
    - Completion check: Postman examples match route payloads and docs mention no-`kb_id` contract
 
-6. `P185-T6` Verification gate
+6. `P185-T6` Verification gate [Done]
    - Run:
      - `cd documind/backend && .venv/bin/python -m unittest discover -s tests -v`
    - Completion check: all tests green
@@ -264,6 +266,7 @@ uvicorn app.main:app --reload --port 8000
 3. Need richer ingestion support for larger PDFs/URLs and async job processing.
 4. Need stronger scoring (ragas/LLM-judge) instead of placeholder observability values.
 5. Important caveat: enforce uniqueness of `(instance_id, namespace_id)` in control-plane DB to avoid ambiguous KB resolution for instance-scoped APIs.
+6. Advanced hybrid currently uses lexical payload scoring for the keyword branch; sparse-vector hybrid should be added when deployment/runtime supports sparse indexes.
 
 ---
 
@@ -327,9 +330,40 @@ uvicorn app.main:app --reload --port 8000
 - Converted Phase 1.8.5 plan into executable tasks in this file as single source of truth.
 - Recorded DB uniqueness caveat for `(instance_id, namespace_id)` under open risks.
 
+### Iteration 5 — Phase 1.8.5 Advanced Retrieval Delivery (2026-04-14)
+
+- Implemented advanced retrieval schemas:
+  - `FilterClause`, `FilterSpec`, `HybridConfig`
+  - `AdvancedSearchRequest`, `AdvancedQueryRequest`
+- Implemented retrieval filter translator for Actian `FilterBuilder` operators:
+  - `eq`, `any_of`, `text`, `between`, `gt`, `gte`, `lt`, `lte`
+- Implemented hybrid fusion retrieval in service layer:
+  - `rrf` and `dbsf`
+- Added advanced instance-scoped routes:
+  - `POST /search/advanced`
+  - `POST /query/advanced`
+- Added tests for:
+  - advanced schema validation
+  - filter translation
+  - hybrid fusion behavior
+  - advanced query router flows
+- Updated Postman collection:
+  - added `search-advanced-instance-scope`
+  - added `query-advanced-instance-scope`
+- Updated backend docs and implementation guide with advanced endpoint examples.
+
+### Iteration 6 — CodeRabbit Follow-Up Fixes (2026-04-14)
+
+- Addressed review concern on hybrid retrieval semantics:
+  - replaced second dense query pass with lexical payload keyword scoring branch
+  - retained fusion options (`rrf`/`dbsf`) over semantic + lexical result sets
+- Added VectorDB scroll helper to support keyword candidate collection.
+- Updated retrieval unit tests for semantic+lexical fusion path.
+- Synced docs with explicit hybrid behavior caveat (lexical branch now, sparse-vector upgrade later).
+
 ### Next Planned Iteration
 
-1. Execute `P185-T1` to `P185-T3` (schemas + filters + hybrid core).
-2. Execute `P185-T4` and `P185-T5` (advanced routes + Postman/docs sync).
-3. Run `P185-T6` verification gate and mark Phase 1.8.5 checkboxes.
-4. Re-evaluate integration packaging (CLI wrapper vs MCP server) after advanced retrieval validation.
+1. Add uniqueness guarantee for `(instance_id, namespace_id)` in control-plane DB.
+2. Start production hardening track: async ingestion jobs + job status endpoints.
+3. Add retry/failure handling for ingestion pipeline and surface error payloads.
+4. Re-evaluate integration packaging (CLI wrapper vs MCP server) after hardening validation.

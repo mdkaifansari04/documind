@@ -211,7 +211,8 @@ Expected response:
 ### Step 5: List resources
 
 - Method: `GET`
-- URL: `http://localhost:8000/resources?kb_id=<kb_id>`
+- URL: `http://localhost:8000/resources?instance_id=<instance_id>&namespace_id=company_docs` (recommended)
+- Alternative URL: `http://localhost:8000/resources?kb_id=<kb_id>` (legacy)
 - Expect: at least 1 resource with `status=done`.
 
 ### Step 6: Semantic search
@@ -249,7 +250,73 @@ Expected response:
   - `sources[]`
   - `response_ms`
 
-### Step 8: Memory ingest
+### Step 8: Advanced filtered/hybrid search
+
+- Method: `POST`
+- URL: `http://localhost:8000/search/advanced`
+- Body (JSON):
+
+```json
+{
+  "instance_id": "<instance_id>",
+  "namespace_id": "company_docs",
+  "query": "deployment notes for user_123",
+  "mode": "hybrid",
+  "hybrid": {
+    "method": "rrf",
+    "dense_weight": 0.7,
+    "keyword_weight": 0.3
+  },
+  "filters": {
+    "must": [
+      {"field": "source_type", "op": "any_of", "value": ["text", "markdown"]},
+      {"field": "user_id", "op": "eq", "value": "user_123"}
+    ],
+    "must_not": [
+      {"field": "session_id", "op": "eq", "value": "debug"}
+    ]
+  },
+  "top_k": 5
+}
+```
+
+- Expect: `results[]` with filtered + fused ranking.
+- Hybrid behavior note:
+  - dense semantic vector search + lexical payload keyword scoring are fused via `rrf`/`dbsf`.
+
+### Step 9: Advanced filtered/hybrid query
+
+- Method: `POST`
+- URL: `http://localhost:8000/query/advanced`
+- Body (JSON):
+
+```json
+{
+  "instance_id": "<instance_id>",
+  "namespace_id": "company_docs",
+  "question": "Summarize deployment constraints from docs.",
+  "mode": "hybrid",
+  "hybrid": {
+    "method": "rrf",
+    "dense_weight": 0.7,
+    "keyword_weight": 0.3
+  },
+  "filters": {
+    "must": [
+      {"field": "source_type", "op": "any_of", "value": ["text", "markdown"]}
+    ]
+  },
+  "top_k": 5
+}
+```
+
+- Expect:
+  - `answer`
+  - `sources[]`
+  - `response_ms`
+  - `mode = hybrid`
+
+### Step 10: Memory ingest
 
 - Method: `POST`
 - URL: `http://localhost:8000/memory/ingest`
@@ -270,7 +337,7 @@ Expected response:
 
 - Expect: `status=success`, `memories_indexed > 0`, `kb_id`.
 
-### Step 9: Memory query
+### Step 11: Memory query
 
 - Method: `POST`
 - URL: `http://localhost:8000/memory/query`
@@ -287,19 +354,19 @@ Expected response:
 
 - Expect: `memories[]` with relevant memory chunks.
 
-### Step 10: Observability scores
+### Step 12: Observability scores
 
 - Method: `GET`
 - URL: `http://localhost:8000/observability/scores?kb_id=<kb_id>&window=1h`
 - Expect: `total_queries >= 1` after using `/query`.
 
-### Step 11: Observability alerts
+### Step 13: Observability alerts
 
 - Method: `GET`
 - URL: `http://localhost:8000/observability/alerts?kb_id=<kb_id>&window=1h`
 - Expect: alerts array (can be empty).
 
-### Step 12: Debug collections
+### Step 14: Debug collections
 
 - Method: `GET`
 - URL: `http://localhost:8000/collections`
@@ -324,7 +391,9 @@ For inline content ingestion in `/resources`:
 - Set header `Content-Type: application/json`
 - Use `source_type = text` or `source_type = markdown`
 - Put your full body in `content`
-- Always pass `kb_id` from KB creation response
+- Pass either:
+  - `instance_id + namespace_id` (recommended)
+  - or `kb_id` (legacy)
 
 ### Ingesting URL
 

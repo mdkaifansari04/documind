@@ -106,11 +106,15 @@ Same target/filter contract, but returns generated answer:
 For `mode = hybrid`:
 
 1. Run dense semantic retrieval with original query.
-2. Run secondary keyword-oriented retrieval.
+2. Run secondary keyword retrieval using lexical scoring over payload text (instance/namespace and filters still applied).
 3. Fuse ranked sets using one of:
 - `rrf` (Reciprocal Rank Fusion)
 - `dbsf` (Distribution-Based Score Fusion)
 4. Apply `top_k` after fusion.
+
+Current implementation detail:
+- Keyword branch is lexical payload scoring (not sparse vectors yet).
+- Sparse vector indexing remains a production hardening upgrade path.
 
 ## 5. Phase 1.8.5 Execution Checklist
 
@@ -118,27 +122,27 @@ This is the remaining work to close backend Phase 1 with advanced retrieval + ha
 
 ### 5.1 Must Ship for Phase 1.8.5
 
-- [ ] Add advanced schemas in `app/models/schemas.py`
+- [x] Add advanced schemas in `app/models/schemas.py`
   - `FilterClause`, `FilterSpec`, `HybridConfig`
   - `AdvancedSearchRequest`, `AdvancedQueryRequest`
-- [ ] Add KB resolver helper for advanced routes (`instance_id + namespace_id -> kb`)
-- [ ] Implement filter translator in `app/services/retrieval.py` (JSON -> Actian `FilterBuilder`)
-- [ ] Implement hybrid search mode in retrieval service
-- [ ] Add routes in `app/routers/query.py`
+- [x] Add KB resolver helper for advanced routes (`instance_id + namespace_id -> kb`)
+- [x] Implement filter translator in `app/services/retrieval.py` (JSON -> Actian `FilterBuilder`)
+- [x] Implement hybrid search mode in retrieval service
+- [x] Add routes in `app/routers/query.py`
   - `POST /search/advanced`
   - `POST /query/advanced`
-- [ ] Unit tests:
+- [x] Unit tests:
   - filter translation behavior
   - hybrid fusion scoring/ranking behavior
   - route validation + response shape
-- [ ] Postman collection updates for advanced endpoints
+- [x] Postman collection updates for advanced endpoints
 
 ### 5.2 Phase 1 Exit Criteria
 
-- [ ] Advanced filtered search works with instance-scoped target (no required `kb_id`)
-- [ ] Hybrid mode works and returns stable fused ranking
-- [ ] All backend tests pass
-- [ ] Docs updated (`README`, `IMPLEMENTATION_TEST_GUIDE`, Postman collection)
+- [x] Advanced filtered search works with instance-scoped target (no required `kb_id`)
+- [x] Hybrid mode works and returns stable fused ranking
+- [x] All backend tests pass
+- [x] Docs updated (`README`, `IMPLEMENTATION_TEST_GUIDE`, Postman collection)
 
 ## 6. Production Hardening (Planned Next, Not Blocking 1.8.5 Ship)
 

@@ -354,6 +354,70 @@
           "response": []
         },
         {
+          "name": "search-advanced-instance-scope",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instance_id\": \"{{instance_id}}\",\n  \"namespace_id\": \"{{namespace_id}}\",\n  \"query\": \"deployment notes for user_123\",\n  \"mode\": \"hybrid\",\n  \"hybrid\": {\n    \"method\": \"rrf\",\n    \"dense_weight\": 0.7,\n    \"keyword_weight\": 0.3\n  },\n  \"filters\": {\n    \"must\": [\n      {\"field\": \"source_type\", \"op\": \"any_of\", \"value\": [\"text\", \"markdown\"]},\n      {\"field\": \"user_id\", \"op\": \"eq\", \"value\": \"user_123\"}\n    ]\n  },\n  \"top_k\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/search/advanced",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "search",
+                "advanced"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "query-advanced-instance-scope",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instance_id\": \"{{instance_id}}\",\n  \"namespace_id\": \"{{namespace_id}}\",\n  \"question\": \"Summarize deployment constraints from docs.\",\n  \"mode\": \"hybrid\",\n  \"hybrid\": {\n    \"method\": \"rrf\",\n    \"dense_weight\": 0.7,\n    \"keyword_weight\": 0.3\n  },\n  \"filters\": {\n    \"must\": [\n      {\"field\": \"source_type\", \"op\": \"any_of\", \"value\": [\"text\", \"markdown\"]}\n    ]\n  },\n  \"top_k\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/query/advanced",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "query",
+                "advanced"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "search-kb-scope-legacy",
           "request": {
             "method": "POST",

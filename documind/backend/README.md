@@ -41,6 +41,8 @@ uvicorn app.main:app --reload --port 8000
 - `POST /query`
 - `POST /search/instance` (search without passing `kb_id`)
 - `POST /query/instance` (query without passing `kb_id`)
+- `POST /search/advanced` (instance-scoped filtered + hybrid retrieval)
+- `POST /query/advanced` (instance-scoped filtered + hybrid RAG)
 - `POST /memory/ingest`
 - `POST /memory/query`
 - `GET /observability/scores?kb_id=...&window=1h`
@@ -87,6 +89,34 @@ POST /search/instance
   "top_k": 5
 }
 ```
+
+```json
+POST /search/advanced
+{
+  "instance_id": "inst_123",
+  "namespace_id": "company_docs",
+  "query": "deployment notes for user_123",
+  "mode": "hybrid",
+  "hybrid": {
+    "method": "rrf",
+    "dense_weight": 0.7,
+    "keyword_weight": 0.3
+  },
+  "filters": {
+    "must": [
+      { "field": "source_type", "op": "any_of", "value": ["text", "markdown"] },
+      { "field": "user_id", "op": "eq", "value": "user_123" }
+    ]
+  },
+  "top_k": 5
+}
+```
+
+`mode = "hybrid"` currently fuses:
+- dense semantic vector retrieval
+- lexical keyword scoring over payload text
+
+Sparse-vector hybrid is planned as a hardening upgrade once sparse indexing is enabled in the target deployment.
 
 ## Advanced Retrieval + Hardening Plan
 
