@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class CreateInstanceRequest(BaseModel):
@@ -58,6 +58,22 @@ class QueryRequest(BaseModel):
     latency_sensitive: bool = False
 
 
+class InstanceScopedSearchRequest(BaseModel):
+    instance_id: str
+    namespace_id: str = "company_docs"
+    query: str
+    top_k: int = 5
+
+
+class InstanceScopedQueryRequest(BaseModel):
+    instance_id: str
+    namespace_id: str = "company_docs"
+    question: str
+    top_k: int = 5
+    llm_profile: str | None = None
+    latency_sensitive: bool = False
+
+
 class SearchResult(BaseModel):
     id: int | str
     text: str
@@ -78,6 +94,23 @@ class IngestResponse(BaseModel):
     status: str
     resource_id: str
     chunks_indexed: int
+
+
+class ResourceIngestRequest(BaseModel):
+    kb_id: str | None = None
+    instance_id: str | None = None
+    namespace_id: str = "company_docs"
+    source_type: str
+    content: str
+    source_ref: str = ""
+    user_id: str = ""
+    session_id: str = ""
+
+    @model_validator(mode="after")
+    def validate_target(self) -> "ResourceIngestRequest":
+        if not self.kb_id and not self.instance_id:
+            raise ValueError("Provide either kb_id or instance_id")
+        return self
 
 
 class MemoryIngestRequest(BaseModel):
