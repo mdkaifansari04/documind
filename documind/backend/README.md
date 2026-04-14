@@ -49,3 +49,10 @@ uvicorn app.main:app --reload --port 8000
 - Control-plane storage currently runs on SQLite for speed (`documind.db`).
 - Prisma schema is included under `prisma/schema.prisma` for PostgreSQL transition.
 - Vector storage/search uses Actian VectorAI DB on `localhost:50051`.
+
+## Current Phase Decisions
+
+- Keep SQLite as the active control-plane DB for advanced retrieval implementation and testing.
+- Defer Neon/PostgreSQL migration until deployment or multi-user requirements are in scope.
+- Deployment complexity is out of scope for the current hackathon phase.
+- Agent integration packaging (CLI wrapper vs MCP server) will be selected after filtered + hybrid retrieval validation.
