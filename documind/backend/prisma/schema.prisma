@@ -1,0 +1,66 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider             = "prisma-client-py"
+  recursive_type_depth = 5
+}
+
+model Instance {
+  id             String          @id @default(uuid())
+  name           String
+  description    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  knowledgeBases KnowledgeBase[]
+}
+
+model KnowledgeBase {
+  id             String     @id @default(uuid())
+  instanceId     String
+  name           String
+  namespaceId    String     @default("company_docs")
+  collectionName String     @unique
+  embeddingModel String     @default("minilm")
+  embeddingDim   Int        @default(384)
+  distanceMetric String     @default("cosine")
+  status         String     @default("active")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  instance       Instance   @relation(fields: [instanceId], references: [id])
+  resources      Resource[]
+
+  @@index([instanceId])
+  @@index([namespaceId])
+}
+
+model Resource {
+  id              String        @id @default(uuid())
+  knowledgeBaseId String
+  sourceType      String
+  sourceRef       String
+  chunksIndexed   Int           @default(0)
+  status          String        @default("pending")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  knowledgeBase   KnowledgeBase @relation(fields: [knowledgeBaseId], references: [id])
+
+  @@index([knowledgeBaseId])
+}
+
+model QueryLog {
+  id                String   @id @default(uuid())
+  knowledgeBaseId   String
+  query             String
+  retrievalScore    Float?
+  chunkRelevance    Float?
+  hallucinationRate Float?
+  chunksRetrieved   Int      @default(0)
+  responseMs        Int?
+  createdAt         DateTime @default(now())
+
+  @@index([knowledgeBaseId])
+  @@index([createdAt])
+}
