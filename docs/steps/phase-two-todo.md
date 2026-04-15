@@ -36,17 +36,17 @@ Rule: mark `[x]` only after code + tests + docs for that task are done.
     - `not_found`, `validation_error`, `timeout`, `server_error`
   - Done when: all tools return same schema shape in success/error paths.
 
-- [ ] `P2-T6` Build CLI wrapper commands (same contract)
+- [x] `P2-T6` Build CLI wrapper commands (same contract)
   - `search-docs`, `ask-docs`, `ingest-text`, `list-kbs`
   - All commands use `instance_id + namespace_id` as primary targeting.
   - Done when: commands work end-to-end against local backend.
 
-- [ ] `P2-T7` Add test coverage (hackathon minimum)
+- [x] `P2-T7` Add test coverage (hackathon minimum)
   - Unit tests for fallback logic and error mapping.
   - Integration smoke test for MCP server against local backend.
   - Done when: test suite for new Phase 2 modules passes.
 
-- [ ] `P2-T8` Update docs and usage examples
+- [x] `P2-T8` Update docs and usage examples
   - Update run instructions + example tool calls + CLI examples.
   - Document timeout defaults (search=8s, ask=25s, ingest=20s).
   - Done when: docs reflect final tool signatures and behavior.
