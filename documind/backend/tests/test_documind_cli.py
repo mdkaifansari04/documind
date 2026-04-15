@@ -147,6 +147,7 @@ class DocuMindCLITests(unittest.TestCase):
                     "inst-1",
                     "--namespace-id",
                     "company_docs",
+                    "--bot=true",
                 ],
                 service=service,
             )
@@ -222,6 +223,7 @@ class DocuMindCLITests(unittest.TestCase):
                     "company_docs",
                     "--content",
                     oversized,
+                    "--bot=true",
                 ],
                 service=service,
             )
@@ -268,6 +270,28 @@ class DocuMindCLITests(unittest.TestCase):
         self.assertEqual(service.calls[1][0], "get_active_context")
         self.assertEqual(service.calls[1][1]["context_id"], "work")
 
+    def test_context_show_human_output_by_default(self) -> None:
+        service = FakeService()
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            exit_code = run_cli(["context-show"], service=service)
+
+        self.assertEqual(exit_code, 0)
+        output = buffer.getvalue()
+        self.assertIn("Active Context", output)
+        self.assertNotIn('{\n  "status":', output)
+
+    def test_context_show_json_output_when_bot_enabled(self) -> None:
+        service = FakeService()
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            exit_code = run_cli(["context-show", "--bot=true"], service=service)
+
+        self.assertEqual(exit_code, 0)
+        rendered = json.loads(buffer.getvalue())
+        self.assertEqual(rendered["status"], "success")
+        self.assertEqual(rendered["data"]["context_id"], "default")
+
     def test_namespaces_command_uses_context_id(self) -> None:
         service = FakeService()
         buffer = io.StringIO()
@@ -313,7 +337,7 @@ class DocuMindCLITests(unittest.TestCase):
         }
         buffer = io.StringIO()
         with redirect_stdout(buffer):
-            exit_code = run_cli(["init", "--namespace-id", "company_docs"], service=service)
+            exit_code = run_cli(["init", "--namespace-id", "company_docs", "--bot=true"], service=service)
 
         self.assertEqual(exit_code, 0)
         self.assertEqual([name for name, _ in service.calls], ["list_instances", "create_instance", "set_active_context"])
@@ -338,7 +362,7 @@ class DocuMindCLITests(unittest.TestCase):
         }
         buffer = io.StringIO()
         with redirect_stdout(buffer):
-            exit_code = run_cli(["init", "--namespace-id", "company_docs"], service=service)
+            exit_code = run_cli(["init", "--namespace-id", "company_docs", "--bot=true"], service=service)
 
         self.assertEqual(exit_code, 0)
         self.assertEqual([name for name, _ in service.calls], ["list_instances", "set_active_context"])
@@ -358,7 +382,7 @@ class DocuMindCLITests(unittest.TestCase):
         buffer = io.StringIO()
         with redirect_stdout(buffer):
             exit_code = run_cli(
-                ["init", "--instance-id", "bad-id", "--namespace-id", "company_docs"],
+                ["init", "--instance-id", "bad-id", "--namespace-id", "company_docs", "--bot=true"],
                 service=service,
             )
 
@@ -373,7 +397,7 @@ class DocuMindCLITests(unittest.TestCase):
         buffer = io.StringIO()
         with patch("documind_cli.sys.stdin.isatty", return_value=False):
             with redirect_stdout(buffer):
-                exit_code = run_cli(["init"], service=service)
+                exit_code = run_cli(["init", "--bot=true"], service=service)
 
         self.assertEqual(exit_code, 1)
         self.assertEqual(service.calls, [])

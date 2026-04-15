@@ -43,6 +43,31 @@ def _show_init_banner() -> None:
     print(f"{dim}DocuMind CLI init{reset}")
 
 
+def _parse_bool(value: str | bool | None) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return True
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "t", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "f", "no", "n", "off"}:
+        return False
+    raise argparse.ArgumentTypeError("expected boolean value: true/false")
+
+
+def _add_bot_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--bot",
+        nargs="?",
+        const=True,
+        default=False,
+        type=_parse_bool,
+        metavar="true|false",
+        help="Output mode: true = JSON for agents, false = human-readable text.",
+    )
+
+
 def _resolve_init_namespace(args: argparse.Namespace) -> str | None:
     namespace_id = args.namespace_id.strip()
     if namespace_id:
@@ -95,11 +120,13 @@ def build_parser() -> argparse.ArgumentParser:
             "  list-kbs        -> list knowledge bases (--instance-id optional)\n"
             "  search-docs     -> fast retrieval (--qr/--query, --top-k)\n"
             "  ask-docs        -> grounded answer (-qs/--question, --top-k)\n"
-            "  ingest-text     -> add inline/file text (--content or --content-file)\n\n"
+            "  ingest-text     -> add inline/file text (--content or --content-file)\n"
+            "  --bot=true      -> force JSON response for agent/tool consumption\n\n"
             "Examples:\n"
             "  documind init --namespace-id company_docs\n"
             "  documind search-docs --qr \"deploy command\" --top-k 5\n"
-            "  documind ask-docs -qs \"How do I deploy?\" --top-k 5"
+            "  documind ask-docs -qs \"How do I deploy?\" --top-k 5\n"
+            "  documind context-show --bot=true"
         ),
     )
     parser.add_argument(
@@ -147,6 +174,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Target namespace_id. If omitted, active context namespace_id is used.",
     )
     search_parser.add_argument("--top-k", type=int, default=5, help="Maximum results to return.")
+    _add_bot_argument(search_parser)
 
     ask_parser = subparsers.add_parser(
         "ask-docs",
@@ -174,6 +202,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Target namespace_id. If omitted, active context namespace_id is used.",
     )
     ask_parser.add_argument("--top-k", type=int, default=5, help="Maximum retrieved chunks to use.")
+    _add_bot_argument(ask_parser)
 
     ingest_parser = subparsers.add_parser(
         "ingest-text",
@@ -207,6 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_content_group = ingest_parser.add_mutually_exclusive_group(required=True)
     ingest_content_group.add_argument("--content", help="Inline content to index.")
     ingest_content_group.add_argument("--content-file", help="Path to text/markdown file.")
+    _add_bot_argument(ingest_parser)
 
     list_parser = subparsers.add_parser(
         "list-kbs",
@@ -215,13 +245,15 @@ def build_parser() -> argparse.ArgumentParser:
         description="List knowledge bases, optionally filtered by instance_id.",
     )
     list_parser.add_argument("--instance-id", default="", help="Optional instance_id filter.")
+    _add_bot_argument(list_parser)
 
-    subparsers.add_parser(
+    instances_parser = subparsers.add_parser(
         "instances",
         formatter_class=_DocuMindHelpFormatter,
         help="List all instances.",
         description="List available instances from the backend.",
     )
+    _add_bot_argument(instances_parser)
 
     instance_create_parser = subparsers.add_parser(
         "instance-create",
@@ -232,6 +264,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     instance_create_parser.add_argument("--name", required=True, help="Instance display name.")
     instance_create_parser.add_argument("-d", "--description", default="", help="Optional description.")
+    _add_bot_argument(instance_create_parser)
 
     namespaces_parser = subparsers.add_parser(
         "namespaces",
@@ -247,13 +280,15 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="Target instance_id. If omitted, active context instance_id is used.",
     )
+    _add_bot_argument(namespaces_parser)
 
-    subparsers.add_parser(
+    context_show_parser = subparsers.add_parser(
         "context-show",
         formatter_class=_DocuMindHelpFormatter,
         help="Show active context.",
         description="Show currently saved context values (context_id, instance_id, namespace_id).",
     )
+    _add_bot_argument(context_show_parser)
 
     context_set_parser = subparsers.add_parser(
         "context-set",
@@ -264,6 +299,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     context_set_parser.add_argument("--instance-id", required=True, help="Instance id to persist in context.")
     context_set_parser.add_argument("--namespace-id", required=True, help="Namespace id to persist in context.")
+    _add_bot_argument(context_set_parser)
 
     init_parser = subparsers.add_parser(
         "init",
@@ -302,6 +338,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="Namespace to store in active context. If omitted, init prompts in interactive shells.",
     )
+    _add_bot_argument(init_parser)
 
     return parser
 
@@ -459,14 +496,184 @@ def execute_command(args: argparse.Namespace, service: DocuMindMCPService) -> di
     return _error_response(message=f"unsupported command: {args.command}", error="server_error")
 
 
+def _styled(text: str, *, color: str | None = None, bold: bool = False, dim: bool = False) -> str:
+    if not sys.stdout.isatty():
+        return text
+    codes: list[str] = []
+    if bold:
+        codes.append("1")
+    if dim:
+        codes.append("2")
+    if color:
+        codes.append(color)
+    if not codes:
+        return text
+    return f"\033[{';'.join(codes)}m{text}\033[0m"
+
+
+def _format_scalar(value: Any) -> str:
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False)
+    if value is None:
+        return "-"
+    return str(value)
+
+
+def _render_kv_block(title: str, mapping: dict[str, Any]) -> str:
+    keys = [key for key, value in mapping.items() if value not in ("", None)]
+    if not keys:
+        return ""
+    width = max(len(key) for key in keys)
+    lines = [_styled(title, bold=True, color="96")]
+    for key in keys:
+        label = key.replace("_", " ")
+        lines.append(f"  {label.ljust(width)} : {_format_scalar(mapping[key])}")
+    return "\n".join(lines)
+
+
+def _render_table(headers: list[str], rows: list[list[Any]]) -> str:
+    if not rows:
+        return ""
+    string_rows = [[_format_scalar(cell) for cell in row] for row in rows]
+    widths = [len(header) for header in headers]
+    for row in string_rows:
+        for idx, cell in enumerate(row):
+            widths[idx] = max(widths[idx], len(cell))
+    header_line = " | ".join(headers[idx].ljust(widths[idx]) for idx in range(len(headers)))
+    sep = "-+-".join("-" * widths[idx] for idx in range(len(headers)))
+    lines = [header_line, sep]
+    for row in string_rows:
+        lines.append(" | ".join(row[idx].ljust(widths[idx]) for idx in range(len(headers))))
+    return "\n".join(lines)
+
+
+def _render_human_response(args: argparse.Namespace, response: dict[str, Any]) -> str:
+    status = str(response.get("status", "unknown")).lower()
+    text = str(response.get("text", "")).strip()
+    data = response.get("data")
+    meta = response.get("meta")
+    lines: list[str] = []
+
+    if status == "success":
+        lines.append(_styled("DocuMind", bold=True, color="96"))
+    else:
+        lines.append(_styled("DocuMind Error", bold=True, color="91"))
+
+    if text:
+        lines.append(text)
+
+    if status != "success":
+        if isinstance(meta, dict):
+            details = _render_kv_block("Error Details", meta)
+            if details:
+                lines.append(details)
+        return "\n".join(lines)
+
+    if args.command == "context-show" and isinstance(data, dict):
+        block = _render_kv_block(
+            "Active Context",
+            {
+                "context_id": data.get("context_id"),
+                "instance_id": data.get("instance_id"),
+                "namespace_id": data.get("namespace_id"),
+                "updated_at": data.get("updated_at"),
+            },
+        )
+        if block:
+            lines.append(block)
+        return "\n".join(lines)
+
+    if args.command == "instances" and isinstance(data, dict):
+        items = data.get("instances") or []
+        rows = [
+            [item.get("id"), item.get("name"), item.get("description"), item.get("updated_at")]
+            for item in items
+            if isinstance(item, dict)
+        ]
+        if rows:
+            lines.append(_styled("Instances", bold=True, color="96"))
+            lines.append(_render_table(["id", "name", "description", "updated_at"], rows))
+        return "\n".join(lines)
+
+    if args.command == "namespaces" and isinstance(data, dict):
+        items = data.get("namespaces") or []
+        if items:
+            lines.append(_styled("Namespaces", bold=True, color="96"))
+            for item in items:
+                lines.append(f"  - {item}")
+        return "\n".join(lines)
+
+    if args.command == "list-kbs" and isinstance(data, dict):
+        items = data.get("knowledge_bases") or []
+        rows = [
+            [item.get("id"), item.get("name"), item.get("namespace_id"), item.get("instance_id")]
+            for item in items
+            if isinstance(item, dict)
+        ]
+        if rows:
+            lines.append(_styled("Knowledge Bases", bold=True, color="96"))
+            lines.append(_render_table(["id", "name", "namespace_id", "instance_id"], rows))
+        return "\n".join(lines)
+
+    if args.command == "search-docs" and isinstance(data, dict):
+        results = data.get("results") or []
+        if results:
+            lines.append(_styled("Search Results", bold=True, color="96"))
+            for idx, result in enumerate(results, start=1):
+                if not isinstance(result, dict):
+                    continue
+                source_ref = result.get("source_ref", "unknown")
+                score = result.get("score", "-")
+                text_value = str(result.get("text", "")).strip()
+                lines.append(f"  [{idx}] {source_ref} (score: {score})")
+                if text_value:
+                    lines.append(f"      {text_value}")
+        return "\n".join(lines)
+
+    if args.command == "ask-docs" and isinstance(data, dict):
+        answer = data.get("answer")
+        if answer:
+            lines.append(_styled("Answer", bold=True, color="96"))
+            lines.append(str(answer))
+        sources = data.get("sources") or []
+        if sources:
+            lines.append(_styled("Sources", bold=True, color="96"))
+            for source in sources:
+                if not isinstance(source, dict):
+                    continue
+                source_ref = source.get("source_ref", "unknown")
+                score = source.get("score", "-")
+                lines.append(f"  - {source_ref} (score: {score})")
+        return "\n".join(lines)
+
+    if args.command in {"ingest-text", "context-set", "init", "instance-create"} and isinstance(data, dict):
+        block = _render_kv_block("Details", data)
+        if block:
+            lines.append(block)
+        return "\n".join(lines)
+
+    if isinstance(data, dict):
+        block = _render_kv_block("Details", data)
+        if block:
+            lines.append(block)
+    elif isinstance(data, list) and data:
+        lines.append(_styled("Details", bold=True, color="96"))
+        for item in data:
+            lines.append(f"  - {_format_scalar(item)}")
+    return "\n".join(lines)
+
+
 def run_cli(argv: list[str] | None = None, *, service: DocuMindMCPService | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.command == "init":
+    if args.command == "init" and not args.bot:
         _show_init_banner()
     active_service = service or _build_service(args.api_url)
     response = execute_command(args, active_service)
-    print(json.dumps(response, indent=2))
+    if args.bot:
+        print(json.dumps(response, indent=2))
+    else:
+        print(_render_human_response(args, response))
     return 0 if response.get("status") == "success" else 1
 
 
