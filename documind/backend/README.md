@@ -84,6 +84,16 @@ dcli search-docs --qr "deploy command" --top-k 5
 dcli ask-docs -qs "What is the deploy command?" --top-k 5
 ```
 
+Output modes:
+- human mode (default): readable terminal output
+- bot mode: add `--bot=true` at the end of a command for JSON output
+
+Example:
+
+```bash
+dcli context-show --bot=true
+```
+
 ## 2) Architecture Overview
 
 Main runtime container (`app/runtime.py`) wires these dependencies:
