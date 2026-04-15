@@ -310,6 +310,22 @@ Avoid asking:
 - for random/raw IDs when options can be listed and chosen semantically
 - except when duplicate instance names require explicit id-based disambiguation
 
+## Failure Handling (Strict)
+
+If any `dcli` call returns `status="error"`:
+- stop the workflow immediately
+- show the error `text` and relevant `meta` to user
+- ask user for correction/confirmation (for example: wrong context, missing namespace, backend down)
+
+Do not do:
+- do not silently retry with MCP DocuMind tools (`documind.*`)
+- do not switch toolchains automatically
+- do not create new instance/namespace as implicit recovery
+
+Allowed recovery:
+- re-run `dcli` with corrected inputs after user confirmation
+- run `context-show`, `instances`, `namespaces`, `context-set` to repair context explicitly
+
 ## Guardrails
 
 - Do not assume cross-instance search.
