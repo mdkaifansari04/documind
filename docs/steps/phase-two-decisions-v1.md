@@ -15,6 +15,13 @@ Status: Locked for implementation
 - `ingest_text`
 - `list_knowledge_bases`
 
+Context UX extension (for first-time setup + switching):
+- `list_instances`
+- `create_instance`
+- `list_namespaces`
+- `get_active_context`
+- `set_active_context`
+
 ## 3) Route Strategy (Fast First)
 
 - `search_docs`:
