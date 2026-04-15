@@ -6,15 +6,23 @@ from mcp_server.service import DocuMindMCPService, MCPTimeouts
 
 
 class FakeAPIClient:
-    def __init__(self, responses):
-        self._responses = list(responses)
-        self.calls: list[tuple[str, dict, int]] = []
+    def __init__(self, post_responses=None, get_responses=None):
+        self._post_responses = list(post_responses or [])
+        self._get_responses = list(get_responses or [])
+        self.post_calls: list[tuple[str, dict, int]] = []
+        self.get_calls: list[tuple[str, dict, int]] = []
 
     def post_json(self, path: str, payload: dict, timeout_seconds: int) -> tuple[int, dict]:
-        self.calls.append((path, payload, timeout_seconds))
-        if not self._responses:
-            raise AssertionError("No fake response left for call")
-        return self._responses.pop(0)
+        self.post_calls.append((path, payload, timeout_seconds))
+        if not self._post_responses:
+            raise AssertionError("No fake POST response left for call")
+        return self._post_responses.pop(0)
+
+    def get_json(self, path: str, params: dict, timeout_seconds: int) -> tuple[int, dict]:
+        self.get_calls.append((path, params, timeout_seconds))
+        if not self._get_responses:
+            raise AssertionError("No fake GET response left for call")
+        return self._get_responses.pop(0)
 
 
 class MCPToolSearchTests(unittest.TestCase):
@@ -23,7 +31,7 @@ class MCPToolSearchTests(unittest.TestCase):
 
     def test_search_docs_primary_success_caps_top_k_without_fallback(self) -> None:
         fake_client = FakeAPIClient(
-            responses=[
+            post_responses=[
                 (
                     200,
                     {
@@ -45,9 +53,9 @@ class MCPToolSearchTests(unittest.TestCase):
         )
 
         self.assertEqual(result["status"], "success")
-        self.assertEqual(len(fake_client.calls), 1)
+        self.assertEqual(len(fake_client.post_calls), 1)
 
-        path, payload, timeout = fake_client.calls[0]
+        path, payload, timeout = fake_client.post_calls[0]
         self.assertEqual(path, "/search/instance")
         self.assertEqual(payload["top_k"], 20)
         self.assertEqual(timeout, 8)
@@ -57,7 +65,7 @@ class MCPToolSearchTests(unittest.TestCase):
 
     def test_search_docs_uses_advanced_fallback_when_primary_is_empty(self) -> None:
         fake_client = FakeAPIClient(
-            responses=[
+            post_responses=[
                 (200, {"kb_id": "kb-1", "results": []}),
                 (
                     200,
@@ -80,10 +88,10 @@ class MCPToolSearchTests(unittest.TestCase):
         )
 
         self.assertEqual(result["status"], "success")
-        self.assertEqual(len(fake_client.calls), 2)
+        self.assertEqual(len(fake_client.post_calls), 2)
 
-        first_path, _, _ = fake_client.calls[0]
-        second_path, second_payload, _ = fake_client.calls[1]
+        first_path, _, _ = fake_client.post_calls[0]
+        second_path, second_payload, _ = fake_client.post_calls[1]
         self.assertEqual(first_path, "/search/instance")
         self.assertEqual(second_path, "/search/advanced")
         self.assertEqual(second_payload["mode"], "hybrid")
@@ -93,7 +101,7 @@ class MCPToolSearchTests(unittest.TestCase):
 
     def test_search_docs_not_found_error_mapping(self) -> None:
         fake_client = FakeAPIClient(
-            responses=[
+            post_responses=[
                 (404, {"detail": "Knowledge base not found for instance_id + namespace_id"}),
             ]
         )
@@ -108,6 +116,119 @@ class MCPToolSearchTests(unittest.TestCase):
         self.assertEqual(result["status"], "error")
         self.assertEqual(result["meta"]["error"], "not_found")
         self.assertIn("not found", result["text"].lower())
+
+
+class MCPToolOtherTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.timeouts = MCPTimeouts(search_seconds=8, ask_seconds=25, ingest_seconds=20)
+
+    def test_ask_docs_primary_success_without_fallback(self) -> None:
+        fake_client = FakeAPIClient(
+            post_responses=[
+                (
+                    200,
+                    {
+                        "answer": "Use rollout command.",
+                        "sources": [{"id": 1, "text": "x", "score": 0.91, "source_ref": "deploy.md"}],
+                        "response_ms": 140,
+                    },
+                )
+            ]
+        )
+        service = DocuMindMCPService(api_client=fake_client, timeouts=self.timeouts)
+
+        result = service.ask_docs(
+            question="How to deploy?",
+            instance_id="inst-1",
+            namespace_id="company_docs",
+            top_k=3,
+        )
+
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(fake_client.post_calls), 1)
+        self.assertEqual(fake_client.post_calls[0][0], "/query/instance")
+        self.assertFalse(result["meta"]["fallback_used"])
+        self.assertEqual(result["data"]["answer"], "Use rollout command.")
+
+    def test_ask_docs_fallback_when_no_sources(self) -> None:
+        fake_client = FakeAPIClient(
+            post_responses=[
+                (200, {"answer": "Unsure", "sources": [], "response_ms": 10}),
+                (
+                    200,
+                    {
+                        "answer": "Final answer",
+                        "sources": [{"id": 2, "text": "y", "score": 0.72, "source_ref": "ops.md"}],
+                        "response_ms": 220,
+                        "mode": "hybrid",
+                    },
+                ),
+            ]
+        )
+        service = DocuMindMCPService(api_client=fake_client, timeouts=self.timeouts)
+
+        result = service.ask_docs(
+            question="Where is deploy runbook?",
+            instance_id="inst-1",
+            namespace_id="company_docs",
+            top_k=5,
+        )
+
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(fake_client.post_calls), 2)
+        self.assertEqual(fake_client.post_calls[0][0], "/query/instance")
+        self.assertEqual(fake_client.post_calls[1][0], "/query/advanced")
+        self.assertTrue(result["meta"]["fallback_used"])
+        self.assertEqual(result["data"]["answer"], "Final answer")
+
+    def test_ingest_text_success(self) -> None:
+        fake_client = FakeAPIClient(
+            post_responses=[
+                (200, {"status": "success", "kb_id": "kb-1", "resource_id": "r-1", "chunks_indexed": 3}),
+            ]
+        )
+        service = DocuMindMCPService(api_client=fake_client, timeouts=self.timeouts)
+
+        result = service.ingest_text(
+            content="release notes",
+            instance_id="inst-1",
+            namespace_id="company_docs",
+            source_ref="notes.md",
+        )
+
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(fake_client.post_calls), 1)
+        path, payload, timeout = fake_client.post_calls[0]
+        self.assertEqual(path, "/resources")
+        self.assertEqual(payload["source_type"], "text")
+        self.assertEqual(timeout, 20)
+        self.assertEqual(result["data"]["chunks_indexed"], 3)
+
+    def test_list_knowledge_bases_success_with_filter(self) -> None:
+        fake_client = FakeAPIClient(
+            get_responses=[
+                (
+                    200,
+                    {
+                        "data": [
+                            {"id": "kb-1", "name": "Docs", "namespace_id": "company_docs"},
+                            {"id": "kb-2", "name": "Runbooks", "namespace_id": "ops"},
+                        ]
+                    },
+                )
+            ]
+        )
+        service = DocuMindMCPService(api_client=fake_client, timeouts=self.timeouts)
+
+        result = service.list_knowledge_bases(instance_id="inst-1")
+
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(fake_client.get_calls), 1)
+        path, params, timeout = fake_client.get_calls[0]
+        self.assertEqual(path, "/knowledge-bases")
+        self.assertEqual(params["instance_id"], "inst-1")
+        self.assertEqual(timeout, 8)
+        self.assertEqual(len(result["data"]["knowledge_bases"]), 2)
 
 
 if __name__ == "__main__":
