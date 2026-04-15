@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,46 @@ from mcp_server.service import DocuMindMCPService
 
 
 MAX_INGEST_BYTES = 200 * 1024
+
+
+class _DocuMindHelpFormatter(argparse.RawTextHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):
+    """Help formatter that keeps docs readable and shows defaults."""
+
+
+INIT_BANNER = "\n".join(
+    [
+        "██████╗  ██████╗██╗     ██╗",
+        "██╔══██╗██╔════╝██║     ██║",
+        "██║  ██║██║     ██║     ██║",
+        "██║  ██║██║     ██║     ██║",
+        "██████╔╝╚██████╗███████╗██║",
+        "╚═════╝  ╚═════╝╚══════╝╚═╝",
+    ]
+)
+
+
+def _show_init_banner() -> None:
+    if not sys.stdout.isatty():
+        return
+    # Soft cyan accent with graceful fallback when ANSI is unsupported.
+    cyan = "\033[96m"
+    dim = "\033[2m"
+    reset = "\033[0m"
+    print(f"{cyan}{INIT_BANNER}{reset}")
+    print(f"{dim}DocuMind CLI init{reset}")
+
+
+def _resolve_init_namespace(args: argparse.Namespace) -> str | None:
+    namespace_id = args.namespace_id.strip()
+    if namespace_id:
+        return namespace_id
+    if not sys.stdin.isatty():
+        return None
+    while True:
+        entered = input("Enter namespace_id to initialize context: ").strip()
+        if entered:
+            return entered
+        print("namespace_id is required. Please enter a non-empty value.")
 
 
 def _error_response(*, message: str, error: str = "validation_error") -> dict[str, Any]:
@@ -36,7 +77,31 @@ def _build_service(api_url: str | None = None) -> DocuMindMCPService:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="documind", description="DocuMind CLI (Phase 2 hackathon)")
+    parser = argparse.ArgumentParser(
+        prog="documind",
+        formatter_class=_DocuMindHelpFormatter,
+        description=(
+            "DocuMind CLI (Phase 2 hackathon)\n"
+            "CLI-first interface for instance_id + namespace_id retrieval workflows."
+        ),
+        epilog=(
+            "Command quick map:\n"
+            "  init            -> bootstrap active context for current context-id\n"
+            "  context-show    -> read saved context (instance_id + namespace_id)\n"
+            "  context-set     -> set saved context manually (--instance-id --namespace-id)\n"
+            "  instances       -> list instances\n"
+            "  instance-create -> create instance (--name, -d/--description)\n"
+            "  namespaces      -> list namespaces for an instance (--instance-id optional)\n"
+            "  list-kbs        -> list knowledge bases (--instance-id optional)\n"
+            "  search-docs     -> fast retrieval (--qr/--query, --top-k)\n"
+            "  ask-docs        -> grounded answer (-qs/--question, --top-k)\n"
+            "  ingest-text     -> add inline/file text (--content or --content-file)\n\n"
+            "Examples:\n"
+            "  documind init --namespace-id company_docs\n"
+            "  documind search-docs --qr \"deploy command\" --top-k 5\n"
+            "  documind ask-docs -qs \"How do I deploy?\" --top-k 5"
+        ),
+    )
     parser.add_argument(
         "--api-url",
         default=os.getenv("DOCUMIND_API_URL", "http://localhost:8000"),
@@ -48,51 +113,195 @@ def build_parser() -> argparse.ArgumentParser:
         help="Active context id for saved instance/namespace (default: %(default)s)",
     )
 
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subparsers(
+        dest="command",
+        required=True,
+        title="Commands",
+        metavar="<command>",
+        description="Run `documind <command> -h` for command-specific flags and examples.",
+    )
 
-    search_parser = subparsers.add_parser("search-docs", help="Search docs by instance_id + namespace_id")
-    search_parser.add_argument("--query", required=True)
-    search_parser.add_argument("--instance-id", default="")
-    search_parser.add_argument("--namespace-id", default="")
-    search_parser.add_argument("--top-k", type=int, default=5)
+    search_parser = subparsers.add_parser(
+        "search-docs",
+        formatter_class=_DocuMindHelpFormatter,
+        help="Fast semantic search in docs.",
+        description=(
+            "Fast semantic retrieval over a namespace.\n"
+            "Uses explicit --instance-id/--namespace-id when provided; otherwise falls back to active context."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  documind search-docs --qr \"deploy command\" --top-k 5\n"
+            "  documind search-docs --qr \"auth token\" --instance-id <iid> --namespace-id company_docs"
+        ),
+    )
+    search_parser.add_argument("--qr", "--query", dest="query", required=True, help="Search query text.")
+    search_parser.add_argument(
+        "--instance-id",
+        default="",
+        help="Target instance_id. If omitted, active context instance_id is used.",
+    )
+    search_parser.add_argument(
+        "--namespace-id",
+        default="",
+        help="Target namespace_id. If omitted, active context namespace_id is used.",
+    )
+    search_parser.add_argument("--top-k", type=int, default=5, help="Maximum results to return.")
 
-    ask_parser = subparsers.add_parser("ask-docs", help="Ask docs with grounded sources")
-    ask_parser.add_argument("--question", required=True)
-    ask_parser.add_argument("--instance-id", default="")
-    ask_parser.add_argument("--namespace-id", default="")
-    ask_parser.add_argument("--top-k", type=int, default=5)
+    ask_parser = subparsers.add_parser(
+        "ask-docs",
+        formatter_class=_DocuMindHelpFormatter,
+        help="RAG answer with citations.",
+        description=(
+            "Generate a grounded answer using retrieved documents.\n"
+            "Uses explicit --instance-id/--namespace-id when provided; otherwise falls back to active context."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  documind ask-docs -qs \"What is the deploy command?\" --top-k 5\n"
+            "  documind ask-docs -qs \"How auth works?\" --instance-id <iid> --namespace-id company_docs"
+        ),
+    )
+    ask_parser.add_argument("-qs", "--question", required=True, help="Natural language question.")
+    ask_parser.add_argument(
+        "--instance-id",
+        default="",
+        help="Target instance_id. If omitted, active context instance_id is used.",
+    )
+    ask_parser.add_argument(
+        "--namespace-id",
+        default="",
+        help="Target namespace_id. If omitted, active context namespace_id is used.",
+    )
+    ask_parser.add_argument("--top-k", type=int, default=5, help="Maximum retrieved chunks to use.")
 
-    ingest_parser = subparsers.add_parser("ingest-text", help="Ingest inline text or a text file")
-    ingest_parser.add_argument("--instance-id", default="")
-    ingest_parser.add_argument("--namespace-id", default="")
-    ingest_parser.add_argument("--source-ref", default="inline")
+    ingest_parser = subparsers.add_parser(
+        "ingest-text",
+        formatter_class=_DocuMindHelpFormatter,
+        help="Index inline text or file content.",
+        description=(
+            "Ingest plaintext/markdown content into a namespace.\n"
+            "Provide exactly one of --content or --content-file."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  documind ingest-text --content \"hello world\" --source-ref notes\n"
+            "  documind ingest-text --content-file README.md --source-ref readme"
+        ),
+    )
+    ingest_parser.add_argument(
+        "--instance-id",
+        default="",
+        help="Target instance_id. If omitted, active context instance_id is used.",
+    )
+    ingest_parser.add_argument(
+        "--namespace-id",
+        default="",
+        help="Target namespace_id. If omitted, active context namespace_id is used.",
+    )
+    ingest_parser.add_argument(
+        "--source-ref",
+        default="inline",
+        help="Logical source name stored with indexed chunks.",
+    )
     ingest_content_group = ingest_parser.add_mutually_exclusive_group(required=True)
-    ingest_content_group.add_argument("--content")
-    ingest_content_group.add_argument("--content-file")
+    ingest_content_group.add_argument("--content", help="Inline content to index.")
+    ingest_content_group.add_argument("--content-file", help="Path to text/markdown file.")
 
-    list_parser = subparsers.add_parser("list-kbs", help="List knowledge bases")
-    list_parser.add_argument("--instance-id", default="")
+    list_parser = subparsers.add_parser(
+        "list-kbs",
+        formatter_class=_DocuMindHelpFormatter,
+        help="List available knowledge bases.",
+        description="List knowledge bases, optionally filtered by instance_id.",
+    )
+    list_parser.add_argument("--instance-id", default="", help="Optional instance_id filter.")
 
-    subparsers.add_parser("instances", help="List available instances")
+    subparsers.add_parser(
+        "instances",
+        formatter_class=_DocuMindHelpFormatter,
+        help="List all instances.",
+        description="List available instances from the backend.",
+    )
 
-    instance_create_parser = subparsers.add_parser("instance-create", help="Create a new instance")
-    instance_create_parser.add_argument("--name", required=True)
-    instance_create_parser.add_argument("--description", default="")
+    instance_create_parser = subparsers.add_parser(
+        "instance-create",
+        formatter_class=_DocuMindHelpFormatter,
+        help="Create a new instance.",
+        description="Create a new DocuMind instance.",
+        epilog="Example:\n  documind instance-create --name \"My Instance\" -d \"local test\"",
+    )
+    instance_create_parser.add_argument("--name", required=True, help="Instance display name.")
+    instance_create_parser.add_argument("-d", "--description", default="", help="Optional description.")
 
-    namespaces_parser = subparsers.add_parser("namespaces", help="List namespaces for an instance")
-    namespaces_parser.add_argument("--instance-id", default="")
+    namespaces_parser = subparsers.add_parser(
+        "namespaces",
+        formatter_class=_DocuMindHelpFormatter,
+        help="List namespaces.",
+        description=(
+            "List namespaces for an instance.\n"
+            "If --instance-id is omitted, active context instance_id is used."
+        ),
+    )
+    namespaces_parser.add_argument(
+        "--instance-id",
+        default="",
+        help="Target instance_id. If omitted, active context instance_id is used.",
+    )
 
-    subparsers.add_parser("context-show", help="Show active context")
+    subparsers.add_parser(
+        "context-show",
+        formatter_class=_DocuMindHelpFormatter,
+        help="Show active context.",
+        description="Show currently saved context values (context_id, instance_id, namespace_id).",
+    )
 
-    context_set_parser = subparsers.add_parser("context-set", help="Set active context")
-    context_set_parser.add_argument("--instance-id", required=True)
-    context_set_parser.add_argument("--namespace-id", required=True)
+    context_set_parser = subparsers.add_parser(
+        "context-set",
+        formatter_class=_DocuMindHelpFormatter,
+        help="Set active context.",
+        description="Persist context for future commands so ids can be omitted.",
+        epilog="Example:\n  documind context-set --instance-id <iid> --namespace-id company_docs",
+    )
+    context_set_parser.add_argument("--instance-id", required=True, help="Instance id to persist in context.")
+    context_set_parser.add_argument("--namespace-id", required=True, help="Namespace id to persist in context.")
 
-    init_parser = subparsers.add_parser("init", help="Initialize active context for first-time usage")
-    init_parser.add_argument("--instance-id", default="")
-    init_parser.add_argument("--instance-name", default="DocuMind Instance")
-    init_parser.add_argument("--instance-description", default="Created by dcli init")
-    init_parser.add_argument("--namespace-id", default="company_docs")
+    init_parser = subparsers.add_parser(
+        "init",
+        formatter_class=_DocuMindHelpFormatter,
+        help="Bootstrap context for first-time use.",
+        description=(
+            "Initialize active context quickly.\n"
+            "Selection order:\n"
+            "  1) use --instance-id if provided\n"
+            "  2) else use latest existing instance\n"
+            "  3) else create a new instance with --instance-name/-description"
+        ),
+        epilog=(
+            "Examples:\n"
+            "  documind init --namespace-id company_docs\n"
+            "  documind init --instance-id <iid> --namespace-id semester_1"
+        ),
+    )
+    init_parser.add_argument(
+        "--instance-id",
+        default="",
+        help="Existing instance_id to bind. If omitted, latest instance is picked or created.",
+    )
+    init_parser.add_argument(
+        "--instance-name",
+        default="DocuMind Instance",
+        help="Used only when init must create a new instance.",
+    )
+    init_parser.add_argument(
+        "--instance-description",
+        default="Created by dcli init",
+        help="Description for auto-created instance.",
+    )
+    init_parser.add_argument(
+        "--namespace-id",
+        default="",
+        help="Namespace to store in active context. If omitted, init prompts in interactive shells.",
+    )
 
     return parser
 
@@ -122,6 +331,15 @@ def _resolve_ingest_content(args: argparse.Namespace) -> tuple[str | None, dict[
 
 def execute_command(args: argparse.Namespace, service: DocuMindMCPService) -> dict[str, Any]:
     if args.command == "init":
+        namespace_id = _resolve_init_namespace(args)
+        if not namespace_id:
+            return _error_response(
+                message=(
+                    "namespace_id is required for init in non-interactive mode. "
+                    "Pass --namespace-id <value>."
+                )
+            )
+
         list_result = service.list_instances()
         if list_result.get("status") != "success":
             return list_result
@@ -163,7 +381,7 @@ def execute_command(args: argparse.Namespace, service: DocuMindMCPService) -> di
 
         set_result = service.set_active_context(
             instance_id=selected_instance_id,
-            namespace_id=args.namespace_id,
+            namespace_id=namespace_id,
             context_id=args.context_id,
         )
         if set_result.get("status") != "success":
@@ -176,7 +394,7 @@ def execute_command(args: argparse.Namespace, service: DocuMindMCPService) -> di
         data["available_instances"] = len(instances)
         text = (
             f"Initialized context '{args.context_id}' -> "
-            f"{selected_instance_id}/{args.namespace_id} ({selection_mode})."
+            f"{selected_instance_id}/{namespace_id} ({selection_mode})."
         )
         return {
             "status": "success",
@@ -244,6 +462,8 @@ def execute_command(args: argparse.Namespace, service: DocuMindMCPService) -> di
 def run_cli(argv: list[str] | None = None, *, service: DocuMindMCPService | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == "init":
+        _show_init_banner()
     active_service = service or _build_service(args.api_url)
     response = execute_command(args, active_service)
     print(json.dumps(response, indent=2))
