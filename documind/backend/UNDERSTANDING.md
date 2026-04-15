@@ -351,7 +351,7 @@ Deferred:
 
 ## 16) Your “Owner Mode” Daily Checklist
 
-1. Read `tomorrow.md`.
+1. Read `docs/tomorrow.md`.
 2. Run backend and execute Postman golden path.
 3. Verify no regression in:
    - ingest
@@ -366,4 +366,4 @@ Deferred:
 - `documind/backend/PHASE1_INTERNAL_FEATURE_BREAKDOWN.md` (deep technical mapping)
 - `documind/backend/POSTMAN_PHASE1_RUNBOOK.md` (manual QA flow)
 - `documind/backend/ACTIAN_OPEN_QUESTIONS.md` (open external questions + decisions)
-- `tomorrow.md` (day handoff and next-start checklist)
+- `docs/tomorrow.md` (day handoff and next-start checklist)

@@ -15,7 +15,7 @@ Completed and documented:
   - filter operators (`eq`, `any_of`, `text`, `between`, `gt/gte/lt/lte`)
   - hybrid mode (`semantic + lexical payload scoring + rrf/dbsf fusion`)
 - Postman collection updated and validated for Phase 1 flow.
-- Phase tracker marked complete in `agent-docs/todo.md`.
+- Phase tracker marked complete in `docs/agent-docs/todo.md`.
 
 New docs added:
 - `documind/backend/README.md` (full architecture + flow)

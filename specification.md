@@ -10,11 +10,11 @@ Implementation rule:
 2. Keep this `specification.md` file updated as a quick implementation status pointer.
 3. After each major phase/iteration, update both:
    - `SPEC.md` (requirements/details)
-   - `agent-docs/tutu.md` (execution progress/context)
+   - `docs/agent-docs/todo.md` (execution progress/context)
 
 Last Synced: 2026-04-14
-Current Active Prompt: `steps/step-one-prompt.md`
-Current Active Reference: `agent-docs/tutu.md`
+Current Active Prompt: `docs/steps/step-one-prompt.md`
+Current Active Reference: `docs/agent-docs/todo.md`
 
 Latest Backend Status (Iteration 2):
 - Class-based FastAPI Phase-1 foundation implemented in `documind/backend/app/`

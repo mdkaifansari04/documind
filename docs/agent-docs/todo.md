@@ -15,7 +15,7 @@ Current Focus: Phase 1 closed; hardening backlog + Phase 2 kickoff prep.
 - Includes Docker compose, SDK docs, examples, and persistent DB data under `data/`.
 - Treat this as reference + runtime dependency, not primary application code.
 
-### `agent-docs/`
+### `docs/agent-docs/`
 
 - Brainstorming and internal reference docs.
 - Contains:
@@ -30,12 +30,12 @@ Current Focus: Phase 1 closed; hardening backlog + Phase 2 kickoff prep.
 - `documind/backend/`: backend app implementation (Phase 1 priority now).
 - `documind/frontend/`: frontend implementation area (not current priority).
 
-### `steps/`
+### `docs/steps/`
 
 - Prompt and phase-planning artifacts.
 - Current source of execution truth:
-  - `steps/step-one-prompt.md`
-  - `steps/step-one-branstorming.md`
+  - `docs/steps/step-one-prompt.md`
+  - `docs/steps/step-one-branstorming.md`
 
 ### `quick-start-demo.py`
 
@@ -53,10 +53,10 @@ Current Focus: Phase 1 closed; hardening backlog + Phase 2 kickoff prep.
 
 ## 2. Current Execution Policy
 
-1. Primary implementation direction comes from `steps/step-one-prompt.md`.
+1. Primary implementation direction comes from `docs/steps/step-one-prompt.md`.
 2. Current phase priority is backend foundation in `documind/backend/`.
 3. Frontend is deferred until backend milestone is complete.
-4. Every iteration must update this file (`agent-docs/todo.md`) with:
+4. Every iteration must update this file (`docs/agent-docs/todo.md`) with:
    - What was implemented
    - What changed in structure/API
    - What remains
@@ -79,7 +79,7 @@ Current Focus: Phase 1 closed; hardening backlog + Phase 2 kickoff prep.
 
 Use this checklist at the end of every coding cycle.
 
-1. Update `agent-docs/todo.md`:
+1. Update `docs/agent-docs/todo.md`:
    - Add one new entry under `Iteration Log`.
    - Update `Phase Tracker`.
    - Update `Open Risks / Blockers`.
@@ -87,7 +87,7 @@ Use this checklist at the end of every coding cycle.
    - Update `SPEC.md` if requirements changed.
    - Update `specification.md` status summary and references.
 3. Update step artifacts when needed:
-   - If major direction changed, append to `steps/step-one-branstorming.md`.
+   - If major direction changed, append to `docs/steps/step-one-branstorming.md`.
 4. Verify runtime assumptions:
    - DB container status
    - API health (when FastAPI exists)
@@ -191,8 +191,8 @@ Execute in order:
 ### Before Implementation
 
 1. Read:
-   - `steps/step-one-prompt.md`
-   - `steps/step-one-branstorming.md`
+   - `docs/steps/step-one-prompt.md`
+   - `docs/steps/step-one-branstorming.md`
    - `SPEC.md`
 2. Confirm current focus task (single implementation slice).
 3. Define expected outputs (files/endpoints/tests).
@@ -229,7 +229,7 @@ Execute in order:
 - Treat as runtime data, not business logic source.
 - Do not manually edit `.btr` files.
 
-### `steps/`
+### `docs/steps/`
 
 - Keep prompts/brainstorming immutable as historical context.
 - Add new step docs instead of rewriting history when decisions evolve.
@@ -309,7 +309,7 @@ These are non-blocking but high-value improvements for reliability and observabi
 
 - Captured current folder structure and implementation rules.
 - Established this file as mandatory living context reference.
-- Locked execution focus to `steps/step-one-prompt.md`.
+- Locked execution focus to `docs/steps/step-one-prompt.md`.
 - Defined per-iteration update policy for spec + progress tracking.
 
 ### Iteration 1 — Class-Based Backend Foundation (2026-04-14)
@@ -336,7 +336,7 @@ These are non-blocking but high-value improvements for reliability and observabi
   - named vectors / multimodal
 - Mapped current implementation gaps for hackathon technical compliance.
 - Created implementation blueprint doc:
-  - `agent-docs/hackathon-advanced-search-readme.md`
+  - `docs/agent-docs/hackathon-advanced-search-readme.md`
 - Recommended phased path:
   1. Filtered search (must-ship)
   2. Hybrid fusion (recommended)
