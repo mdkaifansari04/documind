@@ -19,7 +19,7 @@
   --secondary-foreground: oklch(0.8 0.06 160);
   --muted: oklch(0.2 0 0);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.25 0.04 160);
+  --accent: oklch(0.21 0 0);
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.69 0.2 23.9);
   --destructive-foreground: oklch(0 0 0);
@@ -34,11 +34,11 @@
   --radius: 0.5rem;
   --sidebar: oklch(0.09 0 0);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(1 0 0);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.16 0 0);
+  --sidebar-primary: oklch(0.4 0.1 160);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.21 0 0);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.18 0 0);
+  --sidebar-border: oklch(0.15 0 0);
   --sidebar-ring: oklch(0.45 0.12 160);
   /* Shadows for dark mode */
   --shadow-2xs: 0 1px 3px 0 hsl(0 0% 0% / 0.05);
@@ -64,7 +64,7 @@
   --secondary-foreground: oklch(0.8 0.06 160);
   --muted: oklch(0.2 0 0);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.25 0.04 160);
+  --accent: oklch(0.21 0 0);
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.69 0.2 23.9);
   --destructive-foreground: oklch(0 0 0);
@@ -78,11 +78,11 @@
   --chart-5: oklch(0.92 0.04 160);
   --sidebar: oklch(0.09 0 0);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(1 0 0);
-  --sidebar-primary-foreground: oklch(0.15 0 0);
-  --sidebar-accent: oklch(0.16 0 0);
+  --sidebar-primary: oklch(0.4 0.1 160);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.21 0 0);
   --sidebar-accent-foreground: oklch(0.98 0 0);
-  --sidebar-border: oklch(0.18 0 0);
+  --sidebar-border: oklch(0.15 0 0);
   --sidebar-ring: oklch(0.45 0.12 160);
   --shadow-2xs: 0 1px 3px 0 hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.05);
@@ -149,6 +149,7 @@
 
   body {
     @apply bg-background text-foreground;
-    -webkit-font-smoothing: antialiased; /* improve text rendering */
+    -webkit-font-smoothing: antialiased;
+    /* improve text rendering */
   }
 }
