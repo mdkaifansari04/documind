@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 
@@ -14,12 +15,12 @@
 	<header class="topbar">
 		<div>
 			<p class="eyebrow">DocuMind Seeded Build</p>
-			<h1>Svelte Task Workspace</h1>
+			<h1>Svelte Workspace</h1>
 		</div>
 		<nav>
-			<a href="/">Tasks</a>
-			<a href="/analytics">Analytics</a>
-			<a href="/reference">Reference</a>
+			<a href={resolve('/')}>Home</a>
+			<a href={resolve('/analytics')}>Analytics</a>
+			<a href={resolve('/reference')}>Reference</a>
 		</nav>
 	</header>
 	<main>{@render children()}</main>
