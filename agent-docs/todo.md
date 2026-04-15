@@ -2,8 +2,8 @@
 
 Purpose: This is the operational reference file that must be updated after every implementation iteration so future work always has context.
 
-Last Updated: 2026-04-14
-Current Focus: Step One Prompt execution (backend-first).
+Last Updated: 2026-04-15
+Current Focus: Phase 1 closed; hardening backlog + Phase 2 kickoff prep.
 
 ---
 
@@ -22,7 +22,7 @@ Current Focus: Step One Prompt execution (backend-first).
   - `BRAINSTROMING.md`
   - `actian-db-readme.md`
   - `resource.md`
-  - `tutu.md` (this file; living implementation reference)
+  - `todo.md` (this file; living implementation reference)
 
 ### `documind/`
 
@@ -56,7 +56,7 @@ Current Focus: Step One Prompt execution (backend-first).
 1. Primary implementation direction comes from `steps/step-one-prompt.md`.
 2. Current phase priority is backend foundation in `documind/backend/`.
 3. Frontend is deferred until backend milestone is complete.
-4. Every iteration must update this file (`agent-docs/tutu.md`) with:
+4. Every iteration must update this file (`agent-docs/todo.md`) with:
    - What was implemented
    - What changed in structure/API
    - What remains
@@ -79,7 +79,7 @@ Current Focus: Step One Prompt execution (backend-first).
 
 Use this checklist at the end of every coding cycle.
 
-1. Update `agent-docs/tutu.md`:
+1. Update `agent-docs/todo.md`:
    - Add one new entry under `Iteration Log`.
    - Update `Phase Tracker`.
    - Update `Open Risks / Blockers`.
@@ -271,6 +271,35 @@ uvicorn app.main:app --reload --port 8000
 4. Need stronger scoring (ragas/LLM-judge) instead of placeholder observability values.
 5. Important caveat: enforce uniqueness of `(instance_id, namespace_id)` in control-plane DB to avoid ambiguous KB resolution for instance-scoped APIs.
 6. Advanced hybrid currently uses lexical payload scoring for the keyword branch; sparse-vector hybrid should be added when deployment/runtime supports sparse indexes.
+
+---
+
+## 8.1 Good to Complete
+
+These are non-blocking but high-value improvements for reliability and observability clarity.
+
+1. Replace placeholder `chunk_relevance` metric.
+   - Current state: `chunk_relevance` is copied from `retrieval_score`.
+   - Better target: score chunk relevance independently using evaluator-backed logic.
+   - Done when: `chunk_relevance` is no longer a mirror of retrieval average.
+
+2. Replace placeholder `hallucination_rate` metric.
+   - Current state: `hallucination_rate` is logged as constant `0.0`.
+   - Better target: groundedness/faithfulness evaluator computes this value per query.
+   - Done when: metric is dynamic and based on answer-vs-source checks.
+
+3. Calibrate `retrieval_score` definition.
+   - Current state: simple average of returned similarity scores.
+   - Better target: stable metric definition across semantic and hybrid modes with documented meaning.
+   - Done when: metric definition is documented and validated against sample workloads.
+
+4. Add metric provenance to `query_logs`.
+   - Store evaluator metadata (name/version/method) with scores.
+   - Done when: each logged metric can be traced to its generation method.
+
+5. Add clear observability labeling in docs/API.
+   - Mark which metrics are proxy vs evaluator-backed during transition.
+   - Done when: dashboards/consumers can distinguish metric confidence level without code lookup.
 
 ---
 
