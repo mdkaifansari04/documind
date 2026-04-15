@@ -65,20 +65,23 @@ export DOCUMIND_API_URL="http://localhost:8000"
 First command for new users:
 
 ```bash
-dcli init
+dcli init --namespace-id "company_docs"
 ```
 
 What `dcli init` does:
 - finds the latest existing instance, or creates one if none exist
-- sets active context to `company_docs` namespace
+- uses the provided namespace (or prompts for namespace in interactive shell if omitted)
 - stores context persistently
+
+Note:
+- in non-interactive mode (agents/CI), pass `--namespace-id` explicitly
 
 Then use:
 
 ```bash
 dcli context-show
-dcli search-docs --query "deploy command" --top-k 5
-dcli ask-docs --question "What is the deploy command?" --top-k 5
+dcli search-docs --qr "deploy command" --top-k 5
+dcli ask-docs -qs "What is the deploy command?" --top-k 5
 ```
 
 ## 2) Architecture Overview

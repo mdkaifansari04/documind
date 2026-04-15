@@ -87,7 +87,7 @@ echo "INSTANCE_ID=${INSTANCE_ID}"
 If the above one-liner fails in your shell, use CLI:
 
 ```bash
-./run_documind_cli.sh instance-create --name "Phase2 Test Instance" --description "Complete testing run"
+./run_documind_cli.sh instance-create --name "Phase2 Test Instance" -d "Complete testing run"
 ```
 
 Ingest baseline docs:
@@ -201,7 +201,7 @@ Expected:
 
 ```bash
 ./run_documind_cli.sh search-docs \
-  --query "deploy payments command" \
+  --qr "deploy payments command" \
   --top-k 5
 ```
 
@@ -213,7 +213,7 @@ Expected:
 
 ```bash
 ./run_documind_cli.sh ask-docs \
-  --question "What is the deploy command?" \
+  -qs "What is the deploy command?" \
   --top-k 5
 ```
 
@@ -255,7 +255,7 @@ Top-k cap:
 
 ```bash
 ./run_documind_cli.sh search-docs \
-  --query "deploy" \
+  --qr "deploy" \
   --top-k 100
 ```
 
@@ -351,13 +351,13 @@ Measure CLI timings:
 
 ```bash
 time ./run_documind_cli.sh search-docs \
-  --query "deploy payments command" \
+  --qr "deploy payments command" \
   --instance-id "${INSTANCE_ID}" \
   --namespace-id "company_docs" \
   --top-k 5 >/tmp/search_out.json
 
 time ./run_documind_cli.sh ask-docs \
-  --question "What is the deploy command?" \
+  -qs "What is the deploy command?" \
   --instance-id "${INSTANCE_ID}" \
   --namespace-id "company_docs" \
   --top-k 5 >/tmp/ask_out.json
