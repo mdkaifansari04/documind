@@ -9,6 +9,7 @@ from app.routing import LLMProfile
 class AgentService:
     def __init__(self):
         self._openai_key = settings.openai_api_key
+        self._openai_timeout_seconds = settings.openai_timeout_seconds
 
     @staticmethod
     def _build_context(sources: list[dict[str, Any]]) -> str:
@@ -42,7 +43,10 @@ class AgentService:
     def _openai_answer(self, question: str, context: str, llm_profile: LLMProfile) -> str:
         import openai
 
-        client = openai.OpenAI(api_key=self._openai_key)
+        client = openai.OpenAI(
+            api_key=self._openai_key,
+            timeout=self._openai_timeout_seconds,
+        )
         response = client.chat.completions.create(
             model=self._resolve_model_for_profile(llm_profile),
             messages=[
