@@ -3,7 +3,7 @@
 Purpose: This is the operational reference file that must be updated after every implementation iteration so future work always has context.
 
 Last Updated: 2026-04-15
-Current Focus: Phase 1 closed; hardening backlog + Phase 2 kickoff prep.
+Current Focus: Phase 2 execution (hackathon mode) using instance-scoped MCP + CLI contract.
 
 ---
 
@@ -34,8 +34,9 @@ Current Focus: Phase 1 closed; hardening backlog + Phase 2 kickoff prep.
 
 - Prompt and phase-planning artifacts.
 - Current source of execution truth:
-  - `docs/steps/step-one-prompt.md`
-  - `docs/steps/step-one-branstorming.md`
+  - `docs/steps/phase-two-decisions-v1.md`
+  - `docs/steps/phase-two-todo.md`
+  - `docs/steps/phase-two-kickoff.md`
 
 ### `quick-start-demo.py`
 
@@ -70,8 +71,9 @@ Current Focus: Phase 1 closed; hardening backlog + Phase 2 kickoff prep.
    - Defer Neon/PostgreSQL migration for later deployment/multi-user phase.
 7. Deployment scope decision:
    - Deployment complexity is intentionally out of scope for current phase.
-8. Integration packaging decision:
-   - Choose CLI wrapper vs MCP server after filtered + hybrid features are implemented and validated.
+8. Integration packaging decision (locked for Phase 2 hackathon scope):
+   - Build both MCP server adapter + CLI wrapper over existing FastAPI backend.
+   - Keep implementation lightweight and speed-first.
 
 ---
 
@@ -132,11 +134,17 @@ Use this checklist at the end of every coding cycle.
 - [x] Update Postman collection with advanced requests
 - [x] Update docs (`documind/backend/README.md`, `documind/backend/IMPLEMENTATION_TEST_GUIDE.md`)
 
-### Phase 2: Agent Integration (READY, NOT STARTED)
+### Phase 2: Agent Integration (IN PROGRESS)
 
-- [ ] LangChain agent tooling (`search_docs` etc.)
-- [ ] Prompt augmentation + response generation flow
-- [ ] Memory routing behavior
+- [ ] Execute Phase 2 checklist in `docs/steps/phase-two-todo.md`
+- [ ] MCP tool surface complete:
+  - `search_docs`
+  - `ask_docs`
+  - `ingest_text`
+  - `list_knowledge_bases`
+- [ ] CLI command surface complete for same 4 operations
+- [ ] Stable JSON response envelope + error mapping applied to all tools
+- [ ] Hackathon verification gate passed and tracker moved to COMPLETE
 
 ### Phase 3: Frontend (DEFERRED)
 
@@ -394,9 +402,23 @@ These are non-blocking but high-value improvements for reliability and observabi
 - Updated retrieval unit tests for semantic+lexical fusion path.
 - Synced docs with explicit hybrid behavior caveat (lexical branch now, sparse-vector upgrade later).
 
+### Iteration 7 — Phase 2 Kickoff + TODO Lock (2026-04-15)
+
+- Confirmed Phase 2 start readiness for hackathon scope.
+- Locked primary contract for new tooling:
+  - `instance_id + namespace_id` everywhere (with `kb_id` legacy compatibility only).
+- Locked packaging direction:
+  - build both MCP adapter + CLI wrapper over existing FastAPI backend.
+- Added Phase 2 planning artifacts in `docs/steps/`:
+  - `phase-two-kickoff.md`
+  - `phase-two-robustness-questions.md`
+  - `phase-two-decisions-v1.md`
+  - `phase-two-todo.md` (single execution checklist).
+- Updated this living tracker Phase 2 status from "READY, NOT STARTED" to "IN PROGRESS".
+
 ### Next Planned Iteration
 
-1. Add uniqueness guarantee for `(instance_id, namespace_id)` in control-plane DB.
-2. Start production hardening track: async ingestion jobs + job status endpoints.
-3. Add retry/failure handling for ingestion pipeline and surface error payloads.
-4. Re-evaluate integration packaging (CLI wrapper vs MCP server) after hardening validation.
+1. Execute `P2-T1` and `P2-T2` from `docs/steps/phase-two-todo.md`.
+2. Add MCP server scaffold + `search_docs` tool with fast-first fallback flow.
+3. Add initial tests for tool response envelope and fallback branch.
+4. Keep implementation hackathon-scoped (no production hardening extras in this phase).
