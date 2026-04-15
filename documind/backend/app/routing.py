@@ -45,7 +45,7 @@ class RoutingService:
         lowered = text.lower()
         keyword_hits = sum(
             phrase in lowered
-            for phrase in ("def ", "class ", "function ", "import ", "return ", "select ", "from ")
+            for phrase in ("def ", "class ", "function ", "import ", "return ", "select ", "from ", "const ", "let ", "var ", "public ", "private ", "protected ", "interface ", "implements ", "extends ")
         )
         symbol_hits = len(re.findall(r"[{}();<>#]", text))
         return keyword_hits >= 1 and symbol_hits >= 2
