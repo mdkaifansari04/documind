@@ -40,6 +40,10 @@ class FakeService:
         self.calls.append(("list_instances", kwargs))
         return {"status": "success", "data": {"instances": []}, "meta": {}, "text": "ok"}
 
+    def create_instance(self, **kwargs):
+        self.calls.append(("create_instance", kwargs))
+        return {"status": "success", "data": {"instance": {"id": "inst-new"}}, "meta": {}, "text": "ok"}
+
     def list_namespaces(self, **kwargs):
         self.calls.append(("list_namespaces", kwargs))
         return {"status": "success", "data": {"namespaces": ["company_docs"]}, "meta": {}, "text": "ok"}
@@ -220,6 +224,22 @@ class DocuMindCLITests(unittest.TestCase):
         name, payload = service.calls[0]
         self.assertEqual(name, "list_namespaces")
         self.assertEqual(payload["context_id"], "team-a")
+
+    def test_instance_create_dispatch(self) -> None:
+        service = FakeService()
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            exit_code = run_cli(
+                ["instance-create", "--name", "Hackathon A", "--description", "test"],
+                service=service,
+            )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(len(service.calls), 1)
+        name, payload = service.calls[0]
+        self.assertEqual(name, "create_instance")
+        self.assertEqual(payload["name"], "Hackathon A")
+        self.assertEqual(payload["description"], "test")
 
 
 if __name__ == "__main__":

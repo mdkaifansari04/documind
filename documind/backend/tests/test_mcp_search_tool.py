@@ -350,6 +350,36 @@ class MCPToolOtherTests(unittest.TestCase):
         self.assertTrue(result["meta"]["context_used"])
         self.assertEqual(result["data"]["namespaces"], ["company_docs", "ops"])
 
+    def test_create_instance_success(self) -> None:
+        fake_client = FakeAPIClient(
+            post_responses=[
+                (200, {"id": "inst-1", "name": "Hackathon", "description": "desc"}),
+            ]
+        )
+        service = DocuMindMCPService(api_client=fake_client, timeouts=self.timeouts)
+
+        result = service.create_instance(name="Hackathon", description="desc")
+
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(len(fake_client.post_calls), 1)
+        path, payload, _ = fake_client.post_calls[0]
+        self.assertEqual(path, "/instances")
+        self.assertEqual(payload["name"], "Hackathon")
+
+    def test_list_namespaces_not_found_for_invalid_instance(self) -> None:
+        fake_client = FakeAPIClient(
+            get_responses=[
+                (200, {"data": []}),  # /knowledge-bases?instance_id=bad
+                (200, {"data": [{"id": "inst-1", "name": "Valid"}]}),  # /instances
+            ]
+        )
+        service = DocuMindMCPService(api_client=fake_client, timeouts=self.timeouts)
+
+        result = service.list_namespaces(instance_id="bad-instance")
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["meta"]["error"], "not_found")
+
 
 if __name__ == "__main__":
     unittest.main()
