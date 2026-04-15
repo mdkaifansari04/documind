@@ -99,7 +99,7 @@ Use this checklist at the end of every coding cycle.
 
 ## 4. Phase Tracker
 
-### Phase 1: Backend Foundation + Retrieval Completion (ACTIVE)
+### Phase 1: Backend Foundation + Retrieval Completion (COMPLETE)
 
 - [x] FastAPI app skeleton in `documind/backend/app/`
 - [x] Config + environment wiring
@@ -109,6 +109,10 @@ Use this checklist at the end of every coding cycle.
 - [x] Ingestion pipeline (chunk + embed + upsert)
 - [x] Search/query APIs
 - [x] Basic observability endpoints
+- [x] Instance-scoped no-`kb_id` API contract (`instance_id + namespace_id`)
+- [x] Advanced retrieval endpoints (`/search/advanced`, `/query/advanced`)
+- [x] Phase 1 docs + Postman sync
+- [x] Phase 1 verification pass (`python -m unittest discover -s tests -v`)
 
 ### Phase 1.8.5: Advanced Retrieval + Hardening Prep (COMPLETE)
 
@@ -128,7 +132,7 @@ Use this checklist at the end of every coding cycle.
 - [x] Update Postman collection with advanced requests
 - [x] Update docs (`documind/backend/README.md`, `documind/backend/IMPLEMENTATION_TEST_GUIDE.md`)
 
-### Phase 2: Agent Integration (LOCKED UNTIL PHASE 1.8.5 READY)
+### Phase 2: Agent Integration (READY, NOT STARTED)
 
 - [ ] LangChain agent tooling (`search_docs` etc.)
 - [ ] Prompt augmentation + response generation flow

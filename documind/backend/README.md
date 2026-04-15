@@ -1,131 +1,256 @@
 # DocuMind Backend (Phase 1)
 
-Class-based FastAPI backend foundation for:
+Last updated: 2026-04-14
 
-- Instance management
-- Knowledge-base management
-- Resource ingestion (text/markdown/pdf/url/conversation JSON)
-- Semantic search and RAG query
-- Conversation memory namespace
-- Basic observability endpoints
+Phase 1 is complete for the current hackathon scope.
 
-## Run
+This backend now includes:
+- class-based FastAPI app structure
+- instance + knowledge base management
+- ingestion for JSON/form-data sources (text, markdown, pdf, url, conversation JSON)
+- instance-scoped retrieval without requiring client `kb_id`
+- advanced retrieval with filters + hybrid fusion
+- memory ingestion/query namespace
+- observability summary endpoints
+- synced Postman collection for manual QA
+
+## 1) Run
 
 ```bash
 cd documind/backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-python main.py
-```
-
-`requirements.txt` installs the Actian SDK from the local wheel in `actian-vectorAI-db-beta/`.
-
-Or:
-
-```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-## Core Endpoints
+Requirements include local Actian SDK wheels from `actian-vectorAI-db-beta/`.
+
+## 2) Architecture Overview
+
+Main runtime container (`app/runtime.py`) wires these dependencies:
+
+```text
+FastAPI routers
+  -> container.store (SQLite control-plane)
+  -> container.vectordb (Actian VectorAI DB)
+  -> container.ingestion (parse -> chunk -> embed -> upsert)
+  -> container.retrieval (semantic/hybrid retrieval + filters)
+  -> container.routing (embedding/LLM profile selection)
+  -> container.agent (grounded answer generation)
+  -> container.observability (query-log summarization)
+```
+
+### Data model split
+
+- Control-plane DB (`documind.db`, SQLite):
+  - instances
+  - knowledge_bases
+  - resources
+  - query_logs
+- Vector-plane (Actian collection per KB):
+  - chunk vectors
+  - chunk payload metadata (`source_type`, `user_id`, `session_id`, `namespace_id`, etc.)
+
+## 3) Identity and Targeting Model
+
+### External identifiers
+
+- `instance_id`: tenant/project boundary
+- `namespace_id`: logical KB space inside an instance (`company_docs`, etc.)
+
+### Internal identifier
+
+- `kb_id`: internal KB row/collection mapping
+
+### Resolution rules
+
+- `POST /resources`:
+  - accepts `kb_id` (legacy) or `instance_id + namespace_id` (preferred)
+  - if instance+namespace KB does not exist, it auto-creates one
+- `POST /search/instance`, `POST /query/instance`, `POST /search/advanced`, `POST /query/advanced`:
+  - resolve KB via `instance_id + namespace_id`
+  - return `404` if not found (no auto-create here)
+
+Code path (actual implementation):
+
+```python
+# app/routers/query.py
+kb = container.store.find_kb_by_namespace(instance_id, namespace_id)
+if not kb:
+    raise HTTPException(404, "Knowledge base not found for instance_id + namespace_id")
+```
+
+## 4) Endpoint Surface
+
+### System
 
 - `GET /health`
+- `GET /collections`
+
+### Instances
+
 - `POST /instances`
 - `GET /instances`
+
+### Knowledge Bases
+
 - `POST /knowledge-bases`
 - `GET /knowledge-bases`
 - `GET /knowledge-bases/{kb_id}`
-- `POST /resources` (multipart for file uploads, JSON for text/markdown)
-- `GET /resources?kb_id=...` or `GET /resources?instance_id=...&namespace_id=...`
-- `POST /search`
-- `POST /query`
-- `POST /search/instance` (search without passing `kb_id`)
-- `POST /query/instance` (query without passing `kb_id`)
-- `POST /search/advanced` (instance-scoped filtered + hybrid retrieval)
-- `POST /query/advanced` (instance-scoped filtered + hybrid RAG)
+
+### Resources (Ingestion + Listing)
+
+- `POST /resources`
+- `GET /resources?instance_id=...&namespace_id=...` (preferred)
+- `GET /resources?kb_id=...` (legacy)
+
+### Retrieval + RAG
+
+- `POST /search` (legacy `kb_id`)
+- `POST /query` (legacy `kb_id`)
+- `POST /search/instance`
+- `POST /query/instance`
+- `POST /search/advanced`
+- `POST /query/advanced`
+
+### Memory
+
 - `POST /memory/ingest`
 - `POST /memory/query`
+
+### Observability
+
 - `GET /observability/scores?kb_id=...&window=1h`
 - `GET /observability/alerts?kb_id=...&window=1h`
 
-## Notes
+## 5) Ingestion Internals
 
-- Control-plane storage currently runs on SQLite for speed (`documind.db`).
-- Prisma schema is included under `prisma/schema.prisma` for PostgreSQL transition.
-- Vector storage/search uses Actian VectorAI DB on `localhost:50051`.
+Pipeline (`app/services/ingestion.py`):
+1. Parse by `source_type`
+2. Chunk text with overlap
+3. Embed chunks
+4. Validate embedding dimension against KB
+5. Upsert points with payload metadata
 
-## Resource Ingestion Formats
+Supported parser behavior:
+- `text`, `markdown`, `transcript`: passthrough
+- `conversation_history_json`: role/content normalization
+- `pdf`: expects base64 payload; extracts text via `pypdf`
+- `url`: fetches page and strips text via `BeautifulSoup`
 
-- `multipart/form-data`:
-  - Use for file uploads (`pdf`, `markdown`, `text`, etc.)
-  - Fields: `source_type`, optional target (`kb_id` OR `instance_id + namespace_id`), optional `content`, optional `file`, optional `source_ref`, `user_id`, `session_id`
-- `application/json`:
-  - Use for inline text payloads
-  - Fields: `source_type`, `content`, optional target (`kb_id` OR `instance_id + namespace_id`), optional `source_ref`, `user_id`, `session_id`
+Actual chunk/upsert loop:
 
-## No `kb_id` Client Flow
-
-Use instance + namespace and let the backend resolve KB internally:
-
-```json
-POST /resources
-{
-  "instance_id": "inst_123",
-  "namespace_id": "company_docs",
-  "source_type": "text",
-  "content": "Deploy flow: merge main, wait for CI, release.",
-  "source_ref": "deploy-notes.txt"
-}
+```python
+for idx, (chunk, vector) in enumerate(zip(chunks, vectors)):
+    payload = {
+        "text": chunk,
+        "source_type": source_type,
+        "resource_id": resource_id,
+        "instance_id": metadata.get("instance_id", ""),
+        "namespace_id": metadata.get("namespace_id", "company_docs"),
+        "user_id": metadata.get("user_id", ""),
+        "session_id": metadata.get("session_id", ""),
+    }
+    points.append(PointStruct(id=..., vector=vector, payload=payload))
 ```
 
-If KB for the given `instance_id + namespace_id` does not exist, `/resources` will auto-create one with default settings and continue ingestion.
+## 6) Retrieval Internals
 
-```json
-POST /search/instance
-{
-  "instance_id": "inst_123",
-  "namespace_id": "company_docs",
-  "query": "how do we deploy",
-  "top_k": 5
-}
-```
+### Semantic mode
 
-```json
-POST /search/advanced
-{
-  "instance_id": "inst_123",
-  "namespace_id": "company_docs",
-  "query": "deployment notes for user_123",
-  "mode": "hybrid",
-  "hybrid": {
-    "method": "rrf",
-    "dense_weight": 0.7,
-    "keyword_weight": 0.3
-  },
-  "filters": {
-    "must": [
-      { "field": "source_type", "op": "any_of", "value": ["text", "markdown"] },
-      { "field": "user_id", "op": "eq", "value": "user_123" }
-    ]
-  },
-  "top_k": 5
-}
-```
+- single dense vector search (`container.retrieval.search_knowledge_base`)
+- optional metadata filters translated into Actian filter DSL
 
-`mode = "hybrid"` currently fuses:
-- dense semantic vector retrieval
-- lexical keyword scoring over payload text
+### Advanced filters
 
-Sparse-vector hybrid is planned as a hardening upgrade once sparse indexing is enabled in the target deployment.
+Supported operators:
+- `eq`
+- `any_of`
+- `text`
+- `between`
+- `gt`, `gte`, `lt`, `lte`
 
-## Advanced Retrieval + Hardening Plan
+### Hybrid mode
 
-- Detailed design and implementation roadmap:
-  - `documind/backend/ADVANCED_RETRIEVAL_README.md`
+Current implementation in `app/services/retrieval.py`:
+1. Dense semantic vector search.
+2. Lexical keyword scoring over payload text from filtered `scroll` candidates.
+3. Fusion with:
+   - `rrf` (weighted by `dense_weight` + `keyword_weight`)
+   - or `dbsf`.
 
-## Current Phase Decisions
+Important: this is true dual-signal fusion (semantic + lexical). It is not sparse-vector indexing yet.
 
-- Keep SQLite as the active control-plane DB for advanced retrieval implementation and testing.
-- Defer Neon/PostgreSQL migration until deployment or multi-user requirements are in scope.
-- Deployment complexity is out of scope for the current hackathon phase.
-- Agent integration packaging (CLI wrapper vs MCP server) will be selected after filtered + hybrid retrieval validation.
+## 7) “Multimodal” and “Code Search” Clarification
+
+This project includes embedding profiles and routing logic:
+
+- `general_text_search` -> MiniLM
+- `higher_quality_text` -> MPNet
+- `balanced_text` -> BGE
+- `multimodal_text_image` -> CLIP
+- `code_search` -> CodeBERT
+
+What is implemented now:
+- profile/model routing exists
+- CLIP text embedding path exists
+- CodeBERT embedding path exists
+
+What is not fully implemented yet:
+- no dedicated image binary ingestion parser/endpoint flow
+- no sparse vector index pipeline
+
+So “multimodal” in this phase means profile/model capability and routing support, not full image ingest UX.
+
+## 8) RAG Answer Generation Behavior
+
+`app/services/agent.py` uses:
+- OpenAI chat completion if API key is present
+- local fallback answer builder if key is missing or API call fails
+
+LLM profile selection (`app/routing.py`):
+- `fast`, `balanced`, `quality`
+- selected from question complexity, source count, and `latency_sensitive`
+
+## 9) Memory Namespace Behavior
+
+`/memory/*` endpoints auto-provision a dedicated KB per instance for namespace `conversation_memory` (configurable).
+
+Memory query uses:
+- MiniLM embeddings
+- metadata filter on `user_id`
+
+This isolates memory retrieval from primary document namespaces.
+
+## 10) Observability Behavior
+
+`/query*` endpoints write query logs:
+- retrieval score (currently avg source score)
+- chunk relevance (currently same placeholder as retrieval score)
+- hallucination rate (currently placeholder `0.0`)
+- response latency
+
+Observability endpoints aggregate these logs by time window.
+
+## 11) Deep Internal Breakdown
+
+For a full feature-by-feature internal walk-through (logic, dependencies, and code-path behavior), see:
+- `documind/backend/PHASE1_INTERNAL_FEATURE_BREAKDOWN.md`
+- `documind/backend/UNDERSTANDING.md` (plain-English owner guide)
+- `documind/backend/ACTIAN_OPEN_QUESTIONS.md` (questions + answer tracker for Actian)
+
+## 12) Postman Testing
+
+Use this dedicated runbook for end-to-end testing:
+- `documind/backend/POSTMAN_PHASE1_RUNBOOK.md`
+
+Collection file:
+- `documind/backend/postman/collection-v1.json`
+
+## 13) Known Caveats and Deferred Hardening
+
+- `(instance_id, namespace_id)` uniqueness is not yet enforced at DB constraint level.
+- Async ingestion jobs/status endpoints are not implemented yet.
+- Sparse-vector hybrid path is deferred; current hybrid uses lexical keyword branch.
+- Control-plane currently fixed to SQLite; Prisma/PostgreSQL is deferred for later phase.
