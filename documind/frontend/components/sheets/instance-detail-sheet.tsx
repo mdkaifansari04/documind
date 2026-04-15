@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { Check, ExternalLink, Database, Copy } from 'lucide-react'
+import { Database, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Sheet,
@@ -11,9 +11,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAppContext } from '@/lib/context'
 import api from '@/lib/api'
@@ -50,139 +47,138 @@ export function InstanceDetailSheet({
 
   return (
     <Sheet open={!!instance} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent className="overflow-y-auto sm:max-w-lg">
+      <SheetContent className="overflow-y-auto sm:max-w-lg border-white/6 bg-[#111] p-0 gap-0">
         {instance && (
           <>
-            <SheetHeader>
+            <SheetHeader className="px-6 pt-6 pb-0">
               <div className="flex items-start justify-between">
                 <div>
-                  <SheetTitle className="text-lg">{instance.name}</SheetTitle>
-                  <SheetDescription className="mt-1">
+                  <SheetTitle className="text-sm font-medium text-white">{instance.name}</SheetTitle>
+                  <SheetDescription className="mt-1 text-xs text-muted-foreground/50">
                     {instance.description || 'No description provided'}
                   </SheetDescription>
                 </div>
                 {activeInstanceId === instance.id ? (
-                  <Badge variant="default" className="text-xs">
+                  <span className="inline-flex items-center gap-1 rounded-md border border-dashed border-emerald-400/20 px-2 py-0.5 text-[10px] text-emerald-400/70">
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
                     Active
-                  </Badge>
+                  </span>
                 ) : (
-                  <Button
-                    size="sm"
+                  <button
                     onClick={() => setActiveInstance(instance.id, instance.name)}
+                    className="h-7 rounded-lg px-3 text-[11px] font-medium text-muted-foreground/50 transition-colors hover:bg-white/6 hover:text-white"
                   >
                     Set Active
-                  </Button>
+                  </button>
                 )}
               </div>
             </SheetHeader>
 
-            <div className="mt-6 space-y-6">
+            <div className="mt-6 space-y-0 px-6 pb-6">
               {/* Instance Details */}
-              <div>
-                <h3 className="mb-3 text-sm font-medium">Details</h3>
-                <dl className="space-y-2 text-sm">
+              <div className="rounded-xl border border-white/6 bg-black p-4">
+                <h3 className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">Details</h3>
+                <dl className="space-y-2.5 text-xs">
                   <div className="flex items-center justify-between">
-                    <dt className="text-muted-foreground">ID</dt>
-                    <dd className="flex items-center gap-1 font-mono text-xs">
+                    <dt className="text-muted-foreground/40">ID</dt>
+                    <dd className="flex items-center gap-1.5 font-mono text-[11px] text-white/70">
                       {instance.id.slice(0, 8)}...
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
+                      <button
+                        className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/30 transition-colors hover:bg-white/6 hover:text-muted-foreground"
                         onClick={copyId}
                       >
                         <Copy className="h-3 w-3" />
-                      </Button>
+                      </button>
                     </dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Created</dt>
-                    <dd>{formatDateTime(instance.created_at)}</dd>
+                    <dt className="text-muted-foreground/40">Created</dt>
+                    <dd className="tabular-nums text-white/70">{formatDateTime(instance.created_at)}</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Updated</dt>
-                    <dd>{formatDateTime(instance.updated_at)}</dd>
+                    <dt className="text-muted-foreground/40">Updated</dt>
+                    <dd className="tabular-nums text-white/70">{formatDateTime(instance.updated_at)}</dd>
                   </div>
                 </dl>
               </div>
 
-              <Separator />
+              <div className="h-px bg-white/6 my-5" />
 
               {/* Namespaces */}
               <div>
-                <h3 className="mb-3 text-sm font-medium">
+                <h3 className="mb-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">
                   Namespaces ({namespaces.length})
                 </h3>
                 {loadingKbs ? (
                   <div className="space-y-2">
-                    <Skeleton className="h-8 w-full" />
-                    <Skeleton className="h-8 w-3/4" />
+                    <Skeleton className="h-7 w-full rounded-md bg-white/3" />
+                    <Skeleton className="h-7 w-3/4 rounded-md bg-white/3" />
                   </div>
                 ) : namespaces.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {namespaces.map((ns) => (
-                      <Badge key={ns} variant="secondary" className="text-xs">
+                      <span key={ns} className="rounded-md border border-white/6 bg-white/3 px-2 py-1 text-[11px] text-white/60">
                         {ns}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground/35">
                     No namespaces yet
                   </p>
                 )}
               </div>
 
-              <Separator />
+              <div className="h-px bg-white/6 my-5" />
 
               {/* Knowledge Bases */}
               <div>
                 <div className="mb-3 flex items-center justify-between">
-                  <h3 className="text-sm font-medium">
+                  <h3 className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">
                     Knowledge Bases ({knowledgeBases?.length ?? 0})
                   </h3>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/knowledge-bases?instance=${instance.id}`}>
-                      View all
-                      <ExternalLink className="ml-1.5 h-3 w-3" />
-                    </Link>
-                  </Button>
+                  <Link
+                    href={`/knowledge-bases?instance=${instance.id}`}
+                    className="text-[11px] text-muted-foreground/40 underline underline-offset-4 decoration-muted-foreground/20 transition-colors hover:text-white hover:decoration-white/40"
+                  >
+                    View all
+                  </Link>
                 </div>
                 {loadingKbs ? (
                   <div className="space-y-2">
                     {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-14 w-full" />
+                      <Skeleton key={i} className="h-14 w-full rounded-lg bg-white/3" />
                     ))}
                   </div>
                 ) : knowledgeBases && knowledgeBases.length > 0 ? (
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     {knowledgeBases.slice(0, 5).map((kb) => (
                       <div
                         key={kb.id}
-                        className="flex items-center justify-between rounded-md border p-3"
+                        className="flex items-center justify-between rounded-lg border border-white/6 bg-[#141414] px-3.5 py-2.5 transition-colors hover:bg-white/4"
                       >
-                        <div className="flex items-center gap-2">
-                          <Database className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-2.5">
+                          <Database className="h-3.5 w-3.5 text-muted-foreground/30" />
                           <div>
-                            <p className="text-sm font-medium">{kb.name}</p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs font-medium text-white/80">{kb.name}</p>
+                            <p className="text-[10px] text-muted-foreground/35">
                               {kb.namespace_id}
                             </p>
                           </div>
                         </div>
-                        <Badge variant="outline" className="text-xs">
+                        <span className="rounded-md border border-white/6 bg-white/3 px-2 py-0.5 text-[10px] text-muted-foreground/50">
                           {kb.status}
-                        </Badge>
+                        </span>
                       </div>
                     ))}
                     {knowledgeBases.length > 5 && (
-                      <p className="text-center text-xs text-muted-foreground">
+                      <p className="pt-1 text-center text-[11px] text-muted-foreground/30">
                         + {knowledgeBases.length - 5} more
                       </p>
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground/35">
                     No knowledge bases yet
                   </p>
                 )}
