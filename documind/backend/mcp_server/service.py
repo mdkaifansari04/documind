@@ -251,6 +251,35 @@ class DocuMindMCPService:
             text=f"Found {len(items)} instance(s).",
         )
 
+    def create_instance(self, *, name: str, description: str = "") -> dict[str, Any]:
+        resolved_name = name.strip()
+        if not resolved_name:
+            return self._error(error="validation_error", text="name is required.")
+
+        payload = {"name": resolved_name, "description": description}
+        try:
+            status_code, response_data = self._api_client.post_json(
+                "/instances",
+                payload,
+                self._timeouts.search_seconds,
+            )
+        except httpx.TimeoutException:
+            return self._error(error="timeout", text="create instance timed out.")
+        except Exception:
+            return self._error(error="server_error", text="create instance failed.")
+
+        if status_code != 200:
+            mapped = self._map_http_error(status_code)
+            detail = str(response_data.get("detail", "Create instance failed"))
+            return self._error(error=mapped, text=detail, http_status=status_code)
+
+        instance_id = str(response_data.get("id", "")).strip()
+        return self._success(
+            data={"instance": response_data},
+            meta={"instance_id": instance_id},
+            text=f"Created instance {instance_id or '(unknown id)'}",
+        )
+
     def list_namespaces(self, *, instance_id: str = "", context_id: str | None = None) -> dict[str, Any]:
         resolved_instance_id = instance_id.strip()
         resolved_context_id = self._resolve_context_id(context_id)
@@ -287,6 +316,21 @@ class DocuMindMCPService:
             )
 
         items = self._extract_list_payload(response_data)
+        if not items:
+            try:
+                inst_status, inst_data = self._fetch_instances()
+            except Exception:
+                inst_status = 500
+                inst_data = {}
+            if inst_status == 200:
+                instances = self._extract_list_payload(inst_data)
+                if not any(str(item.get("id", "")).strip() == resolved_instance_id for item in instances):
+                    return self._error(
+                        error="not_found",
+                        text=f"Instance not found: {resolved_instance_id}",
+                        data={"instance_id": resolved_instance_id},
+                    )
+
         namespace_set = {
             str(item.get("namespace_id", "")).strip()
             for item in items

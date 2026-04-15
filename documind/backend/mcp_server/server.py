@@ -97,6 +97,11 @@ def build_mcp_server():
         return service.list_instances()
 
     @mcp.tool()
+    def create_instance(name: str, description: str = "") -> dict[str, Any]:
+        """Create a new instance for first-time setup."""
+        return service.create_instance(name=name, description=description)
+
+    @mcp.tool()
     def list_namespaces(instance_id: str = "", context_id: str = "") -> dict[str, Any]:
         """List namespaces for an instance, or use active context when instance_id is omitted."""
         return service.list_namespaces(instance_id=instance_id, context_id=context_id)
