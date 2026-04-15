@@ -213,12 +213,14 @@ export default function OverviewPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Vector DB</span>
-                  <span className="font-medium">{health.vectordb.title}</span>
+                  <span className="font-medium">
+                    {health.vectordb?.title ?? 'Unknown'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Version</span>
                   <span className="font-mono text-xs">
-                    {health.vectordb.version}
+                    {health.vectordb?.version ?? 'Unavailable'}
                   </span>
                 </div>
               </div>

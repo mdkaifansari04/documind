@@ -106,15 +106,18 @@ export const mockResources: Resource[] = [
 ]
 
 export const mockHealth: HealthResponse = {
-  status: "healthy",
-  qdrant: "ok",
-  db: "ok"
+  status: "ok",
+  vectordb: {
+    title: "Actian Vector",
+    version: "Mock 1.0.0"
+  }
 }
 
 export const mockCollections: CollectionsResponse = {
   collections: [
-    { name: "kb_c1111111_k1111111", vectors_count: 14 },
-    { name: "kb_c2222222_k2222222", vectors_count: 8 },
-    { name: "kb_c3333333_k3333333", vectors_count: 96 }
-  ]
+    "kb_c1111111_k1111111",
+    "kb_c2222222_k2222222",
+    "kb_c3333333_k3333333"
+  ],
+  knowledge_bases: mockKnowledgeBases
 }

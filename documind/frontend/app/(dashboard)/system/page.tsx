@@ -123,7 +123,9 @@ export default function SystemPage() {
                       <Database className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium">{health.vectordb.title}</p>
+                      <p className="font-medium">
+                        {health.vectordb?.title ?? 'Unknown'}
+                      </p>
                       <p className="text-sm text-muted-foreground">
                         Vector Database
                       </p>
@@ -134,7 +136,7 @@ export default function SystemPage() {
                   </div>
                   <div className="mt-3 rounded bg-muted/50 px-3 py-2">
                     <p className="font-mono text-xs text-muted-foreground">
-                      {health.vectordb.version}
+                      {health.vectordb?.version ?? 'Unavailable'}
                     </p>
                   </div>
                 </div>
