@@ -25,7 +25,7 @@ If `dcli` is missing, ask the user to follow `docs/steps/dcli-global-codex-integ
 1. Initialize first for new sessions:
 
 ```bash
-dcli init
+dcli init --namespace-id "<namespace_id>"
 ```
 
 2. Check active context:
@@ -36,7 +36,7 @@ dcli context-show
 
 3. If context is still missing:
 - list instances: `dcli instances`
-- if needed create instance: `dcli instance-create --name "<name>" --description "<desc>"`
+- if needed create instance: `dcli instance-create --name "<name>" -d "<desc>"`
 - list namespaces: `dcli namespaces --instance-id "<instance_id>"`
 - set context: `dcli context-set --instance-id "<instance_id>" --namespace-id "<namespace_id>"`
 
@@ -51,13 +51,13 @@ dcli context-show
 For factual lookup (counts, names, exact commands), use search first:
 
 ```bash
-dcli search-docs --query "<query>" --top-k 5
+dcli search-docs --qr "<query>" --top-k 5
 ```
 
 For synthesized answers with sources:
 
 ```bash
-dcli ask-docs --question "<question>" --top-k 5
+dcli ask-docs -qs "<question>" --top-k 5
 ```
 
 If search/ask fails with `context_missing`, run context workflow again.

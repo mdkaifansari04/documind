@@ -84,7 +84,7 @@ export DOCUMIND_API_URL="http://localhost:8000"
 Run init first:
 
 ```bash
-dcli init
+dcli init --namespace-id "company_docs"
 ```
 
 or
@@ -96,8 +96,10 @@ DCLI init
 `dcli init` behavior:
 - uses latest existing instance if present
 - creates a new instance if none exist
-- sets context to `company_docs`
+- uses provided namespace via `--namespace-id` (or prompts in interactive shell if omitted)
 - persists context for next calls
+
+For non-interactive environments (Codex/CI), always pass `--namespace-id`.
 
 Optional explicit setup:
 
@@ -116,7 +118,7 @@ dcli context-show
 2. If no instance exists:
 
 ```bash
-dcli instance-create --name "My Instance" --description "local test"
+dcli instance-create --name "My Instance" -d "local test"
 ```
 
 3. List instances:
@@ -144,13 +146,13 @@ dcli context-show
 Search:
 
 ```bash
-dcli search-docs --query "deploy payments command" --top-k 5
+dcli search-docs --qr "deploy payments command" --top-k 5
 ```
 
 Ask:
 
 ```bash
-dcli ask-docs --question "What is the deploy command?" --top-k 5
+dcli ask-docs -qs "What is the deploy command?" --top-k 5
 ```
 
 Ingest inline text:
