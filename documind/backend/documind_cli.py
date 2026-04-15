@@ -8,6 +8,7 @@ from typing import Any
 
 from mcp_server.client import DocuMindAPIClient
 from mcp_server.config import load_settings
+from mcp_server.context_store import ActiveContextStore
 from mcp_server.service import DocuMindMCPService
 
 
@@ -29,6 +30,8 @@ def _build_service(api_url: str | None = None) -> DocuMindMCPService:
     return DocuMindMCPService(
         api_client=DocuMindAPIClient(resolved_api_url),
         timeouts=settings.timeouts,
+        context_store=ActiveContextStore(settings.context_store_path),
+        default_context_id=settings.default_context_id,
     )
 
 
@@ -71,6 +74,10 @@ def build_parser() -> argparse.ArgumentParser:
     list_parser.add_argument("--instance-id", default="")
 
     subparsers.add_parser("instances", help="List available instances")
+
+    instance_create_parser = subparsers.add_parser("instance-create", help="Create a new instance")
+    instance_create_parser.add_argument("--name", required=True)
+    instance_create_parser.add_argument("--description", default="")
 
     namespaces_parser = subparsers.add_parser("namespaces", help="List namespaces for an instance")
     namespaces_parser.add_argument("--instance-id", default="")
@@ -144,6 +151,9 @@ def execute_command(args: argparse.Namespace, service: DocuMindMCPService) -> di
 
     if args.command == "instances":
         return service.list_instances()
+
+    if args.command == "instance-create":
+        return service.create_instance(name=args.name, description=args.description)
 
     if args.command == "namespaces":
         return service.list_namespaces(instance_id=args.instance_id, context_id=args.context_id)
