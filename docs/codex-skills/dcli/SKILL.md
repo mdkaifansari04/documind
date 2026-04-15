@@ -78,7 +78,10 @@ dcli ingest-text --source-ref "<source>" --content-file "<path>"
 
 ## Output Handling
 
-`dcli` outputs JSON envelope:
+Default `dcli` output is human-readable.
+For agent workflows always pass `--bot=true` so output is JSON.
+
+JSON envelope fields:
 - `status`
 - `data`
 - `meta`

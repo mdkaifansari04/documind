@@ -173,6 +173,16 @@ Switch namespace:
 dcli context-set --instance-id "<INSTANCE_ID>" --namespace-id "ops"
 ```
 
+Output mode:
+- default: human-readable terminal output
+- agents/tools: append `--bot=true` to get JSON
+
+Example:
+
+```bash
+dcli context-show --bot=true
+```
+
 ---
 
 ## 6) Install Skill into Codex CLI
