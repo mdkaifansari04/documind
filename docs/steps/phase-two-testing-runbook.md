@@ -148,24 +148,24 @@ export DOCUMIND_API_URL="http://localhost:8000"
 
 ### 5.0 first-time context setup (new)
 
-Show current context (expected error on first run):
+Run init first (recommended):
 
 ```bash
-./run_documind_cli.sh context-show ; echo "exit=$?"
+./run_documind_cli.sh init
 ```
 
-Set active context:
-
-```bash
-./run_documind_cli.sh context-set \
-  --instance-id "${INSTANCE_ID}" \
-  --namespace-id "company_docs"
-```
-
-Show context again:
+Then verify:
 
 ```bash
 ./run_documind_cli.sh context-show
+```
+
+If you want explicit target instead of auto init:
+
+```bash
+./run_documind_cli.sh init \
+  --instance-id "${INSTANCE_ID}" \
+  --namespace-id "company_docs"
 ```
 
 List instances and namespaces:

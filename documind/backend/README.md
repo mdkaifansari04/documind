@@ -26,6 +26,61 @@ uvicorn app.main:app --reload --port 8000
 
 Requirements include local Actian SDK wheels from `actian-vectorAI-db-beta/`.
 
+## 1.1) DCLI Quick Start (Developer-Friendly)
+
+You can run DocuMind via global CLI command `dcli` (also available as `DCLI`).
+
+Global install (recommended with `pipx`):
+
+```bash
+pipx install /Users/mdkaifansari04/code/projects/vector-ai/documind/backend
+```
+
+If you are iterating on local code:
+
+```bash
+pipx reinstall documind-cli
+```
+
+If `documind-cli` is not installed yet, force-install from local path:
+
+```bash
+pipx install --force /Users/mdkaifansari04/code/projects/vector-ai/documind/backend
+```
+
+If using a local venv directly:
+
+```bash
+cd /Users/mdkaifansari04/code/projects/vector-ai/documind/backend
+source .venv/bin/activate
+pip install -e . --no-build-isolation
+```
+
+Set backend URL (if needed):
+
+```bash
+export DOCUMIND_API_URL="http://localhost:8000"
+```
+
+First command for new users:
+
+```bash
+dcli init
+```
+
+What `dcli init` does:
+- finds the latest existing instance, or creates one if none exist
+- sets active context to `company_docs` namespace
+- stores context persistently
+
+Then use:
+
+```bash
+dcli context-show
+dcli search-docs --query "deploy command" --top-k 5
+dcli ask-docs --question "What is the deploy command?" --top-k 5
+```
+
 ## 2) Architecture Overview
 
 Main runtime container (`app/runtime.py`) wires these dependencies:
