@@ -21,6 +21,14 @@ class DocuMindAPIClient:
         )
         return response.status_code, self._safe_json(response)
 
+    def get_json(self, path: str, params: dict[str, Any], timeout_seconds: int) -> tuple[int, dict[str, Any]]:
+        response = httpx.get(
+            self._url(path),
+            params=params,
+            timeout=timeout_seconds,
+        )
+        return response.status_code, self._safe_json(response)
+
     @staticmethod
     def _safe_json(response: httpx.Response) -> dict[str, Any]:
         try:
