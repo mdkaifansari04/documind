@@ -31,7 +31,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Slider } from '@/components/ui/slider'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -159,21 +158,26 @@ export default function SearchPage() {
 
   if (!hasContext) {
     return (
-      <div className="p-6">
+      <div className="mx-auto max-w-5xl px-6 py-6">
         <PageHeader title="Search" description="Search your knowledge bases" />
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Context Required</AlertTitle>
-          <AlertDescription>
+        <div className="flex items-start gap-3 rounded-xl border border-white/6 bg-[#111] px-5 py-4">
+          <AlertCircle
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40"
+            strokeWidth={1.5}
+          />
+          <div>
+            <p className="text-xs font-medium text-white/80">Context Required</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground/40">
             Please select an instance and namespace from the top bar to search.
-          </AlertDescription>
-        </Alert>
+            </p>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="p-6">
+    <div className="mx-auto max-w-5xl px-6 py-6">
       <PageHeader
         title="Search"
         description={`Search within ${activeInstanceName} / ${activeNamespaceId}`}
@@ -182,21 +186,21 @@ export default function SearchPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
         {/* Search Form */}
         <div className="space-y-6">
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-white/6 bg-[#111]">
+            <CardContent className="pt-5">
               <form onSubmit={form.handleSubmit(onSubmit)}>
                 <FieldGroup className="gap-4">
                   <Field>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/40" />
                       <Input
                         placeholder="Enter your search query..."
-                        className="pl-9"
+                        className="h-8 rounded-lg border-white/6 bg-white/3 pl-8 text-xs placeholder:text-muted-foreground/30 focus-visible:border-white/12 focus-visible:ring-0"
                         {...form.register('query')}
                       />
                     </div>
                     {form.formState.errors.query && (
-                      <FieldError>
+                      <FieldError className="text-[11px]">
                         {form.formState.errors.query.message}
                       </FieldError>
                     )}
@@ -204,21 +208,25 @@ export default function SearchPage() {
 
                   <div className="flex items-end gap-4">
                     <Field className="w-32">
-                      <FieldLabel>Top K</FieldLabel>
+                      <FieldLabel className="text-[11px] uppercase tracking-wide text-muted-foreground/50 font-medium">
+                        Top K
+                      </FieldLabel>
                       <Input
                         type="number"
                         min={1}
                         max={50}
+                        className="h-8 rounded-lg border-white/6 bg-white/3 text-xs focus-visible:border-white/12 focus-visible:ring-0"
                         {...form.register('top_k', { valueAsNumber: true })}
                       />
                     </Field>
                     <Button
                       type="submit"
                       size="sm"
+                      className="h-8 rounded-lg text-xs"
                       disabled={searchMutation.isPending}
                     >
                       {searchMutation.isPending && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                       )}
                       Search
                     </Button>
@@ -230,53 +238,78 @@ export default function SearchPage() {
 
           {/* Advanced Options */}
           <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
-            <Card>
+            <Card className="border-white/6 bg-[#111]">
               <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-muted/50">
+                <CardHeader className="cursor-pointer py-4 transition-colors hover:bg-white/4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-medium">
+                    <CardTitle className="text-sm font-medium text-white">
                       Advanced Options
                     </CardTitle>
                     <ChevronDown
-                      className={`h-4 w-4 transition-transform ${advancedOpen ? 'rotate-180' : ''}`}
+                      className={`h-3.5 w-3.5 text-muted-foreground/40 transition-transform ${advancedOpen ? 'rotate-180' : ''}`}
+                      strokeWidth={1.5}
                     />
                   </div>
                 </CardHeader>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-6 border-t border-white/6 pt-5">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field>
-                      <FieldLabel>Mode</FieldLabel>
+                      <FieldLabel className="text-[11px] uppercase tracking-wide text-muted-foreground/50 font-medium">
+                        Mode
+                      </FieldLabel>
                       <Select
                         value={mode}
                         onValueChange={(v: 'semantic' | 'hybrid') => setMode(v)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-8 rounded-lg border-white/6 bg-white/3 text-xs focus-visible:border-white/12 focus-visible:ring-0">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="semantic">Semantic</SelectItem>
-                          <SelectItem value="hybrid">Hybrid</SelectItem>
+                        <SelectContent className="rounded-lg border-white/8 bg-[#1a1a1a] p-1">
+                          <SelectItem
+                            value="semantic"
+                            className="rounded-md px-2.5 py-1.5 text-xs"
+                          >
+                            Semantic
+                          </SelectItem>
+                          <SelectItem
+                            value="hybrid"
+                            className="rounded-md px-2.5 py-1.5 text-xs"
+                          >
+                            Hybrid
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </Field>
 
                     {mode === 'hybrid' && (
                       <Field>
-                        <FieldLabel>Hybrid Method</FieldLabel>
+                        <FieldLabel className="text-[11px] uppercase tracking-wide text-muted-foreground/50 font-medium">
+                          Hybrid Method
+                        </FieldLabel>
                         <Select
                           value={hybridMethod}
                           onValueChange={(v: 'rrf' | 'dbsf') =>
                             setHybridMethod(v)
                           }
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="h-8 rounded-lg border-white/6 bg-white/3 text-xs focus-visible:border-white/12 focus-visible:ring-0">
                             <SelectValue />
                           </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="rrf">RRF</SelectItem>
-                            <SelectItem value="dbsf">DBSF</SelectItem>
+                          <SelectContent className="rounded-lg border-white/8 bg-[#1a1a1a] p-1">
+                            <SelectItem
+                              value="rrf"
+                              className="rounded-md px-2.5 py-1.5 text-xs"
+                            >
+                              RRF
+                            </SelectItem>
+                            <SelectItem
+                              value="dbsf"
+                              className="rounded-md px-2.5 py-1.5 text-xs"
+                            >
+                              DBSF
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </Field>
@@ -286,7 +319,7 @@ export default function SearchPage() {
                   {mode === 'hybrid' && (
                     <div className="grid gap-4 sm:grid-cols-2">
                       <Field>
-                        <FieldLabel>
+                        <FieldLabel className="text-[11px] uppercase tracking-wide text-muted-foreground/50 font-medium">
                           Dense Weight: {denseWeight.toFixed(2)}
                         </FieldLabel>
                         <Slider
@@ -298,7 +331,7 @@ export default function SearchPage() {
                         />
                       </Field>
                       <Field>
-                        <FieldLabel>
+                        <FieldLabel className="text-[11px] uppercase tracking-wide text-muted-foreground/50 font-medium">
                           Keyword Weight: {keywordWeight.toFixed(2)}
                         </FieldLabel>
                         <Slider
@@ -315,14 +348,17 @@ export default function SearchPage() {
                   {/* Filters */}
                   <div>
                     <div className="mb-2 flex items-center justify-between">
-                      <FieldLabel>Filters (must)</FieldLabel>
+                      <FieldLabel className="text-[11px] uppercase tracking-wide text-muted-foreground/50 font-medium">
+                        Filters (must)
+                      </FieldLabel>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
+                        className="h-7 rounded-lg px-2.5 text-[11px] text-muted-foreground/50 hover:bg-white/6 hover:text-white"
                         onClick={addFilter}
                       >
-                        <Plus className="mr-1 h-3 w-3" />
+                        <Plus className="mr-1 h-3 w-3" strokeWidth={1.5} />
                         Add Filter
                       </Button>
                     </div>
@@ -331,7 +367,7 @@ export default function SearchPage() {
                         {filters.map((filter, index) => (
                           <div
                             key={index}
-                            className="flex items-center gap-2 rounded-md border p-2"
+                            className="flex items-center gap-2 rounded-lg border border-white/6 bg-white/2 p-2"
                           >
                             <Input
                               placeholder="Field"
@@ -339,7 +375,7 @@ export default function SearchPage() {
                               onChange={(e) =>
                                 updateFilter(index, { field: e.target.value })
                               }
-                              className="flex-1"
+                              className="h-8 flex-1 rounded-lg border-white/6 bg-white/3 text-xs focus-visible:border-white/12 focus-visible:ring-0"
                             />
                             <Select
                               value={filter.op}
@@ -347,18 +383,18 @@ export default function SearchPage() {
                                 op: FilterClause['op']
                               ) => updateFilter(index, { op })}
                             >
-                              <SelectTrigger className="w-24">
+                              <SelectTrigger className="h-8 w-24 rounded-lg border-white/6 bg-white/3 text-xs focus-visible:border-white/12 focus-visible:ring-0">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="eq">eq</SelectItem>
-                                <SelectItem value="ne">ne</SelectItem>
-                                <SelectItem value="gt">gt</SelectItem>
-                                <SelectItem value="gte">gte</SelectItem>
-                                <SelectItem value="lt">lt</SelectItem>
-                                <SelectItem value="lte">lte</SelectItem>
-                                <SelectItem value="any_of">any_of</SelectItem>
-                                <SelectItem value="contains">
+                              <SelectContent className="rounded-lg border-white/8 bg-[#1a1a1a] p-1">
+                                <SelectItem value="eq" className="rounded-md px-2.5 py-1.5 text-xs">eq</SelectItem>
+                                <SelectItem value="ne" className="rounded-md px-2.5 py-1.5 text-xs">ne</SelectItem>
+                                <SelectItem value="gt" className="rounded-md px-2.5 py-1.5 text-xs">gt</SelectItem>
+                                <SelectItem value="gte" className="rounded-md px-2.5 py-1.5 text-xs">gte</SelectItem>
+                                <SelectItem value="lt" className="rounded-md px-2.5 py-1.5 text-xs">lt</SelectItem>
+                                <SelectItem value="lte" className="rounded-md px-2.5 py-1.5 text-xs">lte</SelectItem>
+                                <SelectItem value="any_of" className="rounded-md px-2.5 py-1.5 text-xs">any_of</SelectItem>
+                                <SelectItem value="contains" className="rounded-md px-2.5 py-1.5 text-xs">
                                   contains
                                 </SelectItem>
                               </SelectContent>
@@ -369,21 +405,22 @@ export default function SearchPage() {
                               onChange={(e) =>
                                 updateFilter(index, { value: e.target.value })
                               }
-                              className="flex-1"
+                              className="h-8 flex-1 rounded-lg border-white/6 bg-white/3 text-xs focus-visible:border-white/12 focus-visible:ring-0"
                             />
                             <Button
                               type="button"
                               variant="ghost"
                               size="sm"
+                              className="h-7 w-7 rounded-lg p-0 text-muted-foreground/40 hover:bg-white/6 hover:text-white"
                               onClick={() => removeFilter(index)}
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-3.5 w-3.5" strokeWidth={1.5} />
                             </Button>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground/40">
                         No filters added
                       </p>
                     )}
@@ -395,9 +432,9 @@ export default function SearchPage() {
         </div>
 
         {/* Results */}
-        <Card className="h-fit lg:sticky lg:top-20">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">
+        <Card className="h-fit border-white/6 bg-[#111] lg:sticky lg:top-20">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-white">
               Results ({results.length})
             </CardTitle>
           </CardHeader>
@@ -405,7 +442,7 @@ export default function SearchPage() {
             {searchMutation.isPending ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-24 w-full" />
+                  <Skeleton key={i} className="h-24 w-full rounded-lg bg-white/3" />
                 ))}
               </div>
             ) : results.length > 0 ? (
@@ -414,30 +451,33 @@ export default function SearchPage() {
                   {results.map((result, index) => (
                     <div
                       key={result.id}
-                      className="rounded-md border p-3 transition-colors hover:bg-muted/50"
-                      style={{ animationDelay: `${index * 35}ms` }}
+                      className="rounded-lg border border-white/6 bg-[#141414] p-3 transition-colors duration-150 hover:bg-white/4"
+                      style={{ animationDelay: `${index * 0.04}s` }}
                     >
                       <div className="mb-2 flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <span className="text-sm font-medium truncate">
+                          <FileText
+                            className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35"
+                            strokeWidth={1.5}
+                          />
+                          <span className="truncate text-sm font-medium text-white/90">
                             {result.source_ref}
                           </span>
                         </div>
-                        <Badge variant="secondary" className="shrink-0 text-xs">
+                        <Badge className="shrink-0 border border-white/6 bg-white/3 text-[10px] text-white/75">
                           {result.score.toFixed(3)}
                         </Badge>
                       </div>
                       <div className="mb-2 flex flex-wrap gap-1.5">
-                        <Badge variant="outline" className="text-xs">
+                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
                           {result.namespace_id}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
                           Chunk {result.chunk_index}
                         </Badge>
                       </div>
                       <p
-                        className={`text-xs text-muted-foreground ${
+                        className={`text-xs text-muted-foreground/45 ${
                           expandedResults.has(result.id)
                             ? ''
                             : 'line-clamp-3'
@@ -449,7 +489,7 @@ export default function SearchPage() {
                         <Button
                           variant="link"
                           size="sm"
-                          className="h-auto p-0 text-xs"
+                          className="h-auto p-0 text-[11px] text-muted-foreground/55 hover:text-white"
                           onClick={() => toggleResultExpand(result.id)}
                         >
                           {expandedResults.has(result.id)
@@ -463,9 +503,9 @@ export default function SearchPage() {
               </ScrollArea>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Search className="mb-4 h-8 w-8 text-muted-foreground" />
-                <p className="text-sm font-medium">No results yet</p>
-                <p className="text-xs text-muted-foreground">
+                <Search className="mb-4 h-8 w-8 text-muted-foreground/35" />
+                <p className="text-sm font-medium text-white/85">No results yet</p>
+                <p className="text-xs text-muted-foreground/40">
                   Enter a query to search your knowledge base
                 </p>
               </div>

@@ -7,12 +7,10 @@ import {
   Loader2,
   Settings2,
   Trash2,
-  ChevronRight,
   FileText,
   Clock,
   AlertCircle,
   Info,
-  Check,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -49,7 +47,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/utils'
@@ -59,8 +56,6 @@ import type {
   ChatScope,
   SearchResult,
   ApiError,
-  Instance,
-  KnowledgeBase,
 } from '@/lib/types'
 
 function generateId() {
@@ -173,7 +168,7 @@ export default function ChatWorkspacePage() {
         top_k: topK,
       })
     },
-    onSuccess: (data, question) => {
+    onSuccess: (data) => {
       const scope = getCurrentScope()
 
       // Add assistant message
@@ -274,14 +269,15 @@ export default function ChatWorkspacePage() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
+      <div className="mx-auto max-w-6xl px-6 py-6">
+        <div className="flex h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-white/6 bg-[#111]">
         {/* Scope Rail */}
-        <div className="w-64 shrink-0 border-r bg-muted/30">
+        <div className="w-72 shrink-0 border-r border-white/6 bg-black">
           <ScrollArea className="h-full">
-            <div className="p-4 space-y-6">
+            <div className="space-y-6 p-4">
               {/* Instance Selector */}
               <div>
-                <h3 className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">
                   Instance
                 </h3>
                 <Select
@@ -293,12 +289,16 @@ export default function ChatWorkspacePage() {
                     setAllNamespaces(false)
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="h-8 w-full rounded-lg border-white/6 bg-white/3 text-xs text-white shadow-none data-[placeholder]:text-muted-foreground/35 focus-visible:border-white/12 focus-visible:ring-0">
                     <SelectValue placeholder="Select instance" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-lg border-white/8 bg-[#1a1a1a] p-1">
                     {instances?.map((instance) => (
-                      <SelectItem key={instance.id} value={instance.id}>
+                      <SelectItem
+                        key={instance.id}
+                        value={instance.id}
+                        className="rounded-md px-2.5 py-1.5 text-xs"
+                      >
                         {instance.name}
                       </SelectItem>
                     ))}
@@ -308,16 +308,16 @@ export default function ChatWorkspacePage() {
 
               {selectedInstanceId && (
                 <>
-                  <Separator />
+                  <Separator className="bg-white/6" />
 
                   {/* Namespace Selector */}
                   <div>
                     <div className="mb-2 flex items-center justify-between">
-                      <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      <h3 className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">
                         Namespaces
                       </h3>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[11px] text-muted-foreground/40">
                           All
                         </span>
                         <Switch
@@ -338,10 +338,10 @@ export default function ChatWorkspacePage() {
                         <label
                           key={namespace}
                           className={cn(
-                            'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors',
+                            'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors',
                             selectedNamespaces.includes(namespace)
-                              ? 'bg-primary/10 text-primary'
-                              : 'hover:bg-muted'
+                              ? 'border border-violet-400/20 bg-violet-400/8 text-white'
+                              : 'text-muted-foreground/55 hover:bg-white/6 hover:text-white'
                           )}
                         >
                           <Checkbox
@@ -352,22 +352,22 @@ export default function ChatWorkspacePage() {
                             onCheckedChange={() => toggleNamespace(namespace)}
                             disabled={allNamespaces}
                           />
-                          <span className="truncate">{namespace}</span>
+                          <span className="truncate font-mono">{namespace}</span>
                         </label>
                       ))}
                       {namespaces.length === 0 && (
-                        <p className="text-xs text-muted-foreground py-2">
+                        <p className="py-2 text-xs text-muted-foreground/35">
                           No namespaces found
                         </p>
                       )}
                     </div>
                   </div>
 
-                  <Separator />
+                  <Separator className="bg-white/6" />
 
                   {/* KB Selector */}
                   <div>
-                    <h3 className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">
                       Knowledge Bases (Optional)
                     </h3>
                     <div className="space-y-1">
@@ -375,10 +375,10 @@ export default function ChatWorkspacePage() {
                         <label
                           key={kb.id}
                           className={cn(
-                            'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer transition-colors',
+                            'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors',
                             selectedKbs.includes(kb.id)
-                              ? 'bg-primary/10 text-primary'
-                              : 'hover:bg-muted'
+                              ? 'border border-violet-400/20 bg-violet-400/8 text-white'
+                              : 'text-muted-foreground/55 hover:bg-white/6 hover:text-white'
                           )}
                         >
                           <Checkbox
@@ -389,7 +389,7 @@ export default function ChatWorkspacePage() {
                         </label>
                       ))}
                       {(!availableKbs || availableKbs.length === 0) && (
-                        <p className="text-xs text-muted-foreground py-2">
+                        <p className="py-2 text-xs text-muted-foreground/35">
                           {selectedNamespaces.length === 0
                             ? 'Select namespaces first'
                             : 'No knowledge bases found'}
@@ -398,12 +398,14 @@ export default function ChatWorkspacePage() {
                     </div>
                   </div>
 
-                  <Separator />
+                  <Separator className="bg-white/6" />
 
                   {/* Settings */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm">Advanced Retrieval</span>
+                      <span className="text-xs text-white/85">
+                        Advanced Retrieval
+                      </span>
                       <Switch
                         checked={useAdvanced}
                         onCheckedChange={setUseAdvanced}
@@ -411,8 +413,8 @@ export default function ChatWorkspacePage() {
                     </div>
                     <div>
                       <div className="mb-2 flex items-center justify-between">
-                        <span className="text-sm">Top K</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-white/85">Top K</span>
+                        <span className="text-xs text-muted-foreground/40">
                           {topK}
                         </span>
                       </div>
@@ -432,12 +434,12 @@ export default function ChatWorkspacePage() {
         </div>
 
         {/* Chat Thread */}
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col bg-[#111]">
           {/* Multi-scope banner */}
           {isMultiScope && hasValidScope && (
-            <Alert className="mx-4 mt-4 border-primary/20 bg-primary/5">
-              <Info className="h-4 w-4" />
-              <AlertDescription className="text-xs">
+            <Alert className="mx-4 mt-4 border-violet-400/20 bg-violet-400/8">
+              <Info className="h-4 w-4 text-violet-300/85" />
+              <AlertDescription className="text-xs text-white/75">
                 Multi-scope orchestration is in preview mode; currently
                 executing primary scope only.
               </AlertDescription>
@@ -448,13 +450,13 @@ export default function ChatWorkspacePage() {
           <ScrollArea className="flex-1 p-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center">
-                <div className="mb-4 rounded-full bg-primary/10 p-4">
-                  <Settings2 className="h-8 w-8 text-primary" />
+                <div className="mb-4 rounded-full border border-white/10 bg-white/4 p-4">
+                  <Settings2 className="h-8 w-8 text-muted-foreground/45" />
                 </div>
-                <h3 className="mb-2 text-lg font-semibold">
+                <h3 className="mb-2 text-lg font-semibold text-white">
                   Chat Workspace
                 </h3>
-                <p className="max-w-md text-sm text-muted-foreground">
+                <p className="max-w-md text-sm text-muted-foreground/45">
                   {hasValidScope
                     ? 'Start asking questions about your documents. Your responses will include citations from your knowledge base.'
                     : 'Select an instance and namespace from the scope rail to start chatting.'}
@@ -472,10 +474,10 @@ export default function ChatWorkspacePage() {
                   >
                     <div
                       className={cn(
-                        'max-w-[80%] rounded-lg px-4 py-3',
+                        'max-w-[80%] rounded-lg border px-4 py-3',
                         message.role === 'user'
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted'
+                          ? 'border-violet-400/30 bg-violet-400/18 text-white'
+                          : 'border-white/6 bg-[#141414] text-white/85'
                       )}
                     >
                       <p className="text-sm whitespace-pre-wrap">
@@ -483,21 +485,18 @@ export default function ChatWorkspacePage() {
                       </p>
 
                       {/* Message metadata */}
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs opacity-70">
-                        <span>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground/55">
+                        <span className="tabular-nums">
                           {new Date(message.createdAt).toLocaleTimeString()}
                         </span>
                         {message.responseMs && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
+                          <span className="flex items-center gap-1 tabular-nums">
+                            <Clock className="h-3 w-3" strokeWidth={1.5} />
                             {message.responseMs}ms
                           </span>
                         )}
                         {message.llmProfile && (
-                          <Badge
-                            variant="outline"
-                            className="h-5 text-[10px] border-current"
-                          >
+                          <Badge className="h-5 border border-white/6 bg-white/3 text-[10px] text-muted-foreground/65">
                             {message.llmProfile}
                           </Badge>
                         )}
@@ -509,8 +508,7 @@ export default function ChatWorkspacePage() {
                           {message.sources.slice(0, 3).map((source, i) => (
                             <Badge
                               key={i}
-                              variant="secondary"
-                              className="cursor-pointer text-xs hover:bg-secondary/80"
+                              className="cursor-pointer border border-white/6 bg-white/3 text-[10px] text-white/75 hover:bg-white/8"
                               onClick={() =>
                                 openSourceInspector(message.sources!)
                               }
@@ -521,8 +519,7 @@ export default function ChatWorkspacePage() {
                           ))}
                           {message.sources.length > 3 && (
                             <Badge
-                              variant="outline"
-                              className="cursor-pointer text-xs"
+                              className="cursor-pointer border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60"
                               onClick={() =>
                                 openSourceInspector(message.sources!)
                               }
@@ -539,9 +536,9 @@ export default function ChatWorkspacePage() {
                 {/* Loading indicator */}
                 {queryMutation.isPending && (
                   <div className="flex justify-start">
-                    <div className="flex items-center gap-2 rounded-lg bg-muted px-4 py-3">
+                    <div className="flex items-center gap-2 rounded-lg border border-white/6 bg-[#141414] px-4 py-3">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-sm text-muted-foreground/55">
                         Thinking...
                       </span>
                     </div>
@@ -554,11 +551,11 @@ export default function ChatWorkspacePage() {
           </ScrollArea>
 
           {/* Composer */}
-          <div className="border-t bg-background p-4">
+          <div className="border-t border-white/6 bg-black p-4">
             {!hasValidScope && (
-              <Alert className="mb-3">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-xs">
+              <Alert className="mb-3 border-white/6 bg-white/4">
+                <AlertCircle className="h-4 w-4 text-muted-foreground/45" />
+                <AlertDescription className="text-xs text-muted-foreground/60">
                   Select an instance and namespace to start chatting
                 </AlertDescription>
               </Alert>
@@ -577,7 +574,7 @@ export default function ChatWorkspacePage() {
                   onKeyDown={handleKeyDown}
                   disabled={!hasValidScope || queryMutation.isPending}
                   rows={2}
-                  className="resize-none pr-20"
+                  className="resize-none rounded-lg border-white/6 bg-white/3 pr-20 text-xs placeholder:text-muted-foreground/30 focus-visible:border-white/12 focus-visible:ring-0"
                 />
                 <div className="absolute bottom-2 right-2 flex items-center gap-1">
                   {messages.length > 0 && (
@@ -586,10 +583,10 @@ export default function ChatWorkspacePage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0"
+                          className="h-7 w-7 rounded-lg p-0 text-muted-foreground/35 hover:bg-white/6 hover:text-white"
                           onClick={clearChat}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>Clear chat</TooltipContent>
@@ -599,6 +596,7 @@ export default function ChatWorkspacePage() {
               </div>
               <Button
                 size="sm"
+                className="h-8 rounded-lg"
                 onClick={handleSubmit}
                 disabled={
                   !hasValidScope ||
@@ -607,9 +605,9 @@ export default function ChatWorkspacePage() {
                 }
               >
                 {queryMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3.5 w-3.5" strokeWidth={1.5} />
                 )}
               </Button>
             </div>
@@ -617,19 +615,22 @@ export default function ChatWorkspacePage() {
             {/* Scope chips */}
             {hasValidScope && (
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">Scope:</span>
+                <span className="text-xs text-muted-foreground/50">Scope:</span>
                 {instances?.find((i) => i.id === selectedInstanceId) && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge className="border border-white/6 bg-white/3 text-[10px] text-white/75">
                     {instances.find((i) => i.id === selectedInstanceId)?.name}
                   </Badge>
                 )}
                 {selectedNamespaces.slice(0, 2).map((ns) => (
-                  <Badge key={ns} variant="outline" className="text-xs">
+                  <Badge
+                    key={ns}
+                    className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60"
+                  >
                     {ns}
                   </Badge>
                 ))}
                 {selectedNamespaces.length > 2 && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
                     +{selectedNamespaces.length - 2}
                   </Badge>
                 )}
@@ -640,34 +641,39 @@ export default function ChatWorkspacePage() {
 
         {/* Source Inspector Sheet */}
         <Sheet open={inspectorOpen} onOpenChange={setInspectorOpen}>
-          <SheetContent className="sm:max-w-lg">
-            <SheetHeader>
-              <SheetTitle>Source Citations</SheetTitle>
-              <SheetDescription>
+          <SheetContent className="sm:max-w-lg border-white/6 bg-[#111] p-0 gap-0">
+            <SheetHeader className="px-6 pt-6 pb-0">
+              <SheetTitle className="text-sm font-medium text-white">
+                Source Citations
+              </SheetTitle>
+              <SheetDescription className="text-xs text-muted-foreground/50">
                 Documents used to generate this response
               </SheetDescription>
             </SheetHeader>
-            <ScrollArea className="mt-4 h-[calc(100vh-10rem)]">
-              <div className="space-y-3 pr-4">
+            <ScrollArea className="mt-4 h-[calc(100vh-10rem)] px-6 pb-6">
+              <div className="space-y-3 pr-1">
                 {selectedMessageSources.map((source, index) => (
-                  <Card key={source.id}>
+                  <Card key={source.id} className="border-white/6 bg-black">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <CardTitle className="text-sm">
+                          <FileText
+                            className="h-3.5 w-3.5 text-muted-foreground/35"
+                            strokeWidth={1.5}
+                          />
+                          <CardTitle className="text-sm text-white/90">
                             {source.source_ref}
                           </CardTitle>
                         </div>
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-white/75">
                           {source.score.toFixed(3)}
                         </Badge>
                       </div>
-                      <CardDescription className="flex gap-2 text-xs">
-                        <Badge variant="outline" className="text-xs">
+                      <CardDescription className="flex gap-2 text-xs text-muted-foreground/45">
+                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
                           {source.namespace_id}
                         </Badge>
-                        <Badge variant="outline" className="text-xs">
+                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
                           Chunk {source.chunk_index}
                         </Badge>
                       </CardDescription>
@@ -675,7 +681,7 @@ export default function ChatWorkspacePage() {
                     <CardContent>
                       <p
                         className={cn(
-                          'text-xs text-muted-foreground',
+                          'text-xs text-muted-foreground/45',
                           expandedSources.has(String(source.id))
                             ? ''
                             : 'line-clamp-4'
@@ -687,7 +693,7 @@ export default function ChatWorkspacePage() {
                         <Button
                           variant="link"
                           size="sm"
-                          className="h-auto p-0 text-xs"
+                          className="h-auto p-0 text-[11px] text-muted-foreground/55 hover:text-white"
                           onClick={() => toggleSourceExpand(String(source.id))}
                         >
                           {expandedSources.has(String(source.id))
@@ -702,6 +708,7 @@ export default function ChatWorkspacePage() {
             </ScrollArea>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
     </TooltipProvider>
   )
