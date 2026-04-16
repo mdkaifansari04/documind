@@ -25,6 +25,7 @@ import {
   SidebarMenuItem,
   SidebarFooter,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
 
 const mainNavItems = [
   {
@@ -84,17 +85,19 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-white/6">
       <SidebarHeader className="border-b border-white/6 px-4 py-3.5">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
-            <Brain
-              className="h-4 w-4 text-primary-foreground"
-              strokeWidth={1.5}
-            />
-          </div>
-          <span className="text-sm font-semibold tracking-tight text-white">
-            DocuMind
-          </span>
+        <Link href="/docs" className="hidden lg:flex items-center gap-1">
+          <Image
+            src="/images/logo.png"
+            alt="DocuMind"
+            width={40}
+            height={40}
+            className="rounded-md"
+          />
+          <span className="font-semibold text-foreground">DocuMind</span>
         </Link>
+        <span className="block lg:hidden font-semibold text-foreground">
+          DocuMind
+        </span>
       </SidebarHeader>
       <SidebarContent className="px-2 py-3">
         <SidebarGroup className="gap-1">
