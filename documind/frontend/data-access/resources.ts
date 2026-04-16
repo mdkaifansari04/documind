@@ -112,11 +112,15 @@ export const uploadResource = async (formData: FormData) => {
 
 export const crawlPreview = async (body: CrawlPreviewRequest) => {
   if (USE_MOCK) {
-    const root = body.url
+    const seedUrls = [body.url, ...(body.seed_urls ?? [])]
+    const root = seedUrls[0] || body.url
     const count = body.crawl_subpages ? Math.min(body.max_pages ?? 20, 6) : 1
-    const links = Array.from({ length: count }).map((_, index) =>
-      index === 0 ? root : `${root.replace(/\/$/, '')}/page-${index + 1}`
+    const rawLinks = seedUrls.flatMap((seed) =>
+      Array.from({ length: count }).map((_, index) =>
+        index === 0 ? seed : `${seed.replace(/\/$/, '')}/page-${index + 1}`
+      )
     )
+    const links = Array.from(new Set(rawLinks)).slice(0, body.max_pages ?? 20)
     const link_items = links.map((url, index) => ({
       url,
       score: Math.max(55, 100 - index * 8),
@@ -132,6 +136,7 @@ export const crawlPreview = async (body: CrawlPreviewRequest) => {
       crawl_subpages: !!body.crawl_subpages,
       scope_mode: body.scope_mode ?? 'strict_docs',
       scope_path: body.scope_path ?? '/docs',
+      seed_urls: seedUrls,
       count: links.length,
       links,
       link_items,
@@ -148,7 +153,21 @@ export const crawlPreview = async (body: CrawlPreviewRequest) => {
 export const crawlIngest = async (body: CrawlIngestRequest) => {
   if (USE_MOCK) {
     const links = body.urls?.length ? body.urls : [body.url]
+    const existingSourceRefs = new Set(
+      localStore.resources
+        .filter((resource) =>
+          body.kb_id ? resource.knowledge_base_id === body.kb_id : true
+        )
+        .map((resource) => resource.source_ref)
+    )
     const results = links.map((url) => {
+      if (body.skip_existing && existingSourceRefs.has(url)) {
+        return {
+          url,
+          status: 'skipped' as const,
+          reason: 'already_ingested',
+        }
+      }
       const next: Resource = {
         id: crypto.randomUUID(),
         knowledge_base_id: body.kb_id ?? '',
@@ -167,6 +186,8 @@ export const crawlIngest = async (body: CrawlIngestRequest) => {
         chunks_indexed: next.chunks_indexed,
       }
     })
+    const successCount = results.filter((item) => item.status === 'success').length
+    const skippedCount = results.filter((item) => item.status === 'skipped').length
 
     return {
       status: 'success',
@@ -174,8 +195,9 @@ export const crawlIngest = async (body: CrawlIngestRequest) => {
       instance_id: body.instance_id ?? '',
       namespace_id: body.namespace_id ?? 'company_docs',
       total_links: links.length,
-      success_count: links.length,
+      success_count: successCount,
       failed_count: 0,
+      skipped_count: skippedCount,
       total_chunks_indexed: results.reduce((sum, item) => sum + (item.chunks_indexed ?? 0), 0),
       results,
     } as CrawlIngestResponse

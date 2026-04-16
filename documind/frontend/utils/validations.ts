@@ -30,10 +30,14 @@ export const crawlPreviewSchema = z.object({
   url: z.string().url('Please enter a valid URL'),
   crawl_subpages: z.boolean().default(false),
   max_pages: z.number().min(1).max(100).default(20),
+  scope_mode: z.enum(['strict_docs', 'same_domain']).default('strict_docs'),
+  scope_path: z.string().optional(),
+  seed_urls: z.array(z.string().url()).optional(),
 })
 
 export const crawlIngestSchema = crawlPreviewSchema.extend({
   urls: z.array(z.string().url()).optional(),
+  skip_existing: z.boolean().optional(),
 })
 
 export const searchSchema = z.object({

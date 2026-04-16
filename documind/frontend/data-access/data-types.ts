@@ -154,14 +154,16 @@ export interface CrawlPreviewResponse {
 
 export interface CrawlIngestRequest extends CrawlPreviewRequest {
   urls?: string[]
+  skip_existing?: boolean
 }
 
 export interface CrawlIngestResultItem {
   url: string
-  status: 'success' | 'failed'
-  resource_id: string
+  status: 'success' | 'failed' | 'skipped'
+  resource_id?: string
   chunks_indexed?: number
   error?: string
+  reason?: string
 }
 
 export interface CrawlIngestResponse {
@@ -172,6 +174,7 @@ export interface CrawlIngestResponse {
   total_links: number
   success_count: number
   failed_count: number
+  skipped_count?: number
   total_chunks_indexed: number
   results: CrawlIngestResultItem[]
 }

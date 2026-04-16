@@ -112,6 +112,8 @@ export default function ResourcesPage() {
     "strict_docs" | "same_domain"
   >("strict_docs");
   const [crawlScopePath, setCrawlScopePath] = useState("");
+  const [additionalSeedUrls, setAdditionalSeedUrls] = useState("");
+  const [crawlSkipExisting, setCrawlSkipExisting] = useState(true);
   const [crawledLinks, setCrawledLinks] = useState<string[]>([]);
   const [crawledLinkItems, setCrawledLinkItems] = useState<
     CrawlPreviewLinkItem[]
@@ -201,11 +203,16 @@ export default function ResourcesPage() {
       toast.error("Documentation URL is required");
       return;
     }
+    const seedUrls = additionalSeedUrls
+      .split("\n")
+      .map((value) => normalizeUrlInput(value))
+      .filter((value) => !!value && value !== normalizedUrl);
 
     crawlPreviewMutation.mutate(
       {
         ...scopePayload,
         url: normalizedUrl,
+        seed_urls: seedUrls,
         crawl_subpages: crawlSubpages,
         max_pages: crawlMaxPages,
         scope_mode: crawlScopeMode,
@@ -259,14 +266,20 @@ export default function ResourcesPage() {
       toast.error("Documentation URL is required");
       return;
     }
+    const seedUrls = additionalSeedUrls
+      .split("\n")
+      .map((value) => normalizeUrlInput(value))
+      .filter((value) => !!value && value !== normalizedUrl);
 
     crawlIngestMutation.mutate(
       {
         ...scopePayload,
         url: normalizedUrl,
+        seed_urls: seedUrls,
         crawl_subpages: crawlSubpages,
         max_pages: crawlMaxPages,
         urls: selectedLinks,
+        skip_existing: crawlSkipExisting,
         scope_mode: crawlScopeMode,
         scope_path:
           crawlScopeMode === "strict_docs" && crawlScopePath.trim()
@@ -276,7 +289,7 @@ export default function ResourcesPage() {
       {
         onSuccess: (result) => {
           toast.success("Crawled links ingested", {
-            description: `Indexed ${result.total_chunks_indexed} chunks from ${result.success_count} link${result.success_count === 1 ? "" : "s"}.`,
+            description: `Indexed ${result.total_chunks_indexed} chunks from ${result.success_count} link${result.success_count === 1 ? "" : "s"}${result.skipped_count ? ` (skipped ${result.skipped_count})` : ""}.`,
           });
         },
         onError: (error: Error) => {
@@ -665,6 +678,19 @@ export default function ResourcesPage() {
                   </Field>
                 </div>
 
+                <Field>
+                  <FieldLabel className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">
+                    Additional Seed URLs (One per line)
+                  </FieldLabel>
+                  <Textarea
+                    rows={3}
+                    placeholder={"https://docs.example.com/guide\nhttps://docs.example.com/reference"}
+                    value={additionalSeedUrls}
+                    onChange={(event) => setAdditionalSeedUrls(event.target.value)}
+                    className="rounded-lg border-white/6 bg-white/3 text-xs placeholder:text-muted-foreground/25 focus-visible:border-white/12 focus-visible:ring-0"
+                  />
+                </Field>
+
                 <div className="flex flex-wrap items-end gap-4">
                   <Field className="min-w-[220px] flex-1">
                     <FieldLabel className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">
@@ -711,6 +737,15 @@ export default function ResourcesPage() {
                     <Link2 className="mr-1.5 h-3.5 w-3.5" strokeWidth={1.5} />
                     Crawl Links
                   </Button>
+                  <label className="flex h-8 items-center gap-2 rounded-lg border border-white/6 bg-white/3 px-3">
+                    <Switch
+                      checked={crawlSkipExisting}
+                      onCheckedChange={setCrawlSkipExisting}
+                    />
+                    <span className="text-[11px] text-muted-foreground/60">
+                      Skip existing
+                    </span>
+                  </label>
                   <Button
                     type="button"
                     size="sm"
