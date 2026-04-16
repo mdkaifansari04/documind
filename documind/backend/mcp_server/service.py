@@ -33,6 +33,51 @@ class DocuMindMCPService:
         resolved = str(context_id or "").strip()
         return resolved or self._default_context_id
 
+    def _resolved_api_url(self) -> str:
+        for attr_name in ("base_url", "_base_url"):
+            value = getattr(self._api_client, attr_name, "")
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return ""
+
+    def _request_exception(self, *, operation: str, exc: Exception) -> dict[str, Any]:
+        detail = str(exc).strip() or exc.__class__.__name__
+        lowered_detail = detail.lower()
+        api_url = self._resolved_api_url() or "DOCUMIND_API_URL"
+
+        if isinstance(exc, httpx.ConnectError):
+            if "operation not permitted" in lowered_detail or "permission denied" in lowered_detail:
+                return self._error(
+                    error="network_blocked",
+                    text=(
+                        f"{operation} failed: Network access is blocked when calling {api_url}. "
+                        "If running in a sandboxed environment, allow network access or run outside sandbox."
+                    ),
+                    extra_meta={
+                        "reason": "network_permission_denied",
+                        "detail": detail,
+                        "api_url": api_url,
+                    },
+                )
+            return self._error(
+                error="connection_error",
+                text=(
+                    f"{operation} failed: Could not connect to {api_url}. "
+                    "Ensure DOCUMIND_API_URL is correct and the backend is running."
+                ),
+                extra_meta={
+                    "reason": "connection_failed",
+                    "detail": detail,
+                    "api_url": api_url,
+                },
+            )
+
+        return self._error(
+            error="server_error",
+            text=f"{operation} failed.",
+            extra_meta={"reason": "request_exception", "detail": detail, "api_url": api_url},
+        )
+
     @staticmethod
     def _error(
         *,
@@ -175,8 +220,8 @@ class DocuMindMCPService:
             status_code, response_data = self._fetch_instances()
         except httpx.TimeoutException:
             return self._error(error="timeout", text="set context timed out while listing instances.")
-        except Exception:
-            return self._error(error="server_error", text="set context failed while listing instances.")
+        except Exception as exc:
+            return self._request_exception(operation="set context while listing instances", exc=exc)
 
         if status_code != 200:
             mapped = self._map_http_error(status_code)
@@ -208,11 +253,25 @@ class DocuMindMCPService:
             available_namespaces = sorted(namespace_set)
             namespace_known = resolved_namespace_id in namespace_set
 
-        active = self._context_store.set(
-            context_id=resolved_context_id,
-            instance_id=resolved_instance_id,
-            namespace_id=resolved_namespace_id,
-        )
+        try:
+            active = self._context_store.set(
+                context_id=resolved_context_id,
+                instance_id=resolved_instance_id,
+                namespace_id=resolved_namespace_id,
+            )
+        except Exception as exc:
+            return self._error(
+                error="server_error",
+                text=(
+                    "Failed to persist active context. "
+                    "Set DOCUMIND_CONTEXT_STORE_PATH to a writable path and retry."
+                ),
+                extra_meta={
+                    "reason": "context_store_unwritable",
+                    "detail": str(exc),
+                    "context_id": resolved_context_id,
+                },
+            )
         return self._success(
             data={
                 **active.as_dict(),
@@ -232,8 +291,8 @@ class DocuMindMCPService:
             status_code, response_data = self._fetch_instances()
         except httpx.TimeoutException:
             return self._error(error="timeout", text="list instances timed out.")
-        except Exception:
-            return self._error(error="server_error", text="list instances failed.")
+        except Exception as exc:
+            return self._request_exception(operation="list instances", exc=exc)
 
         if status_code != 200:
             mapped = self._map_http_error(status_code)

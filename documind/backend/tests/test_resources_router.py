@@ -208,6 +208,219 @@ class ResourceRouterTests(unittest.TestCase):
         self.assertEqual(ingest_kwargs["source_type"], "markdown")
         self.assertEqual(ingest_kwargs["content"], "# Heading\nhello markdown")
 
+    def test_ingest_defaults_source_ref_when_missing(self) -> None:
+        fake_store = MagicMock()
+        fake_store.get_knowledge_base.return_value = {
+            "id": "kb-1",
+            "instance_id": "inst-1",
+            "namespace_id": "company_docs",
+            "embedding_model": "minilm",
+            "embedding_dim": 384,
+            "collection_name": "kb_collection",
+        }
+        fake_store.create_resource.return_value = {"id": "res-1"}
+
+        fake_ingestion = MagicMock()
+        fake_ingestion.ingest.return_value = 1
+
+        fake_container = SimpleNamespace(store=fake_store, ingestion=fake_ingestion)
+        client = self._build_client(fake_container)
+
+        response = client.post(
+            "/resources",
+            json={
+                "kb_id": "kb-1",
+                "source_type": "text",
+                "content": "inline text payload",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        create_resource_kwargs = fake_store.create_resource.call_args.kwargs
+        self.assertEqual(create_resource_kwargs["source_ref"], "inline-content.txt")
+
+    def test_crawl_preview_returns_discovered_links(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-1",
+            "instance_id": "inst-1",
+            "namespace_id": "company_docs",
+        }
+        fake_container = SimpleNamespace(store=fake_store, ingestion=MagicMock())
+        client = self._build_client(fake_container)
+
+        with patch(
+            "app.routers.resources.DocumentationCrawler.discover",
+            return_value=[
+                "https://docs.example.com",
+                "https://docs.example.com/getting-started",
+            ],
+        ):
+            response = client.post(
+                "/resources/crawl/preview",
+                json={
+                    "instance_id": "inst-1",
+                    "namespace_id": "company_docs",
+                    "url": "https://docs.example.com",
+                    "crawl_subpages": True,
+                    "max_pages": 10,
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "success")
+        self.assertEqual(body["count"], 2)
+        self.assertEqual(
+            body["links"],
+            [
+                "https://docs.example.com",
+                "https://docs.example.com/getting-started",
+            ],
+        )
+
+    def test_crawl_preview_exposes_scope_metadata(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-1",
+            "instance_id": "inst-1",
+            "namespace_id": "company_docs",
+        }
+        fake_container = SimpleNamespace(store=fake_store, ingestion=MagicMock())
+        client = self._build_client(fake_container)
+
+        with patch(
+            "app.routers.resources.DocumentationCrawler.discover",
+            return_value=["https://docs.example.com/start"],
+        ):
+            response = client.post(
+                "/resources/crawl/preview",
+                json={
+                    "instance_id": "inst-1",
+                    "namespace_id": "company_docs",
+                    "url": "https://docs.example.com/start",
+                    "crawl_subpages": True,
+                    "scope_mode": "strict_docs",
+                    "scope_path": "/docs/example",
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["scope_mode"], "strict_docs")
+        self.assertEqual(body["scope_path"], "/docs/example")
+
+    def test_crawl_preview_passes_scope_options_to_crawler(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-1",
+            "instance_id": "inst-1",
+            "namespace_id": "company_docs",
+        }
+        fake_container = SimpleNamespace(store=fake_store, ingestion=MagicMock())
+        client = self._build_client(fake_container)
+
+        with patch(
+            "app.routers.resources.DocumentationCrawler.discover",
+            return_value=["https://docs.example.com/start"],
+        ) as discover_mock:
+            response = client.post(
+                "/resources/crawl/preview",
+                json={
+                    "instance_id": "inst-1",
+                    "namespace_id": "company_docs",
+                    "url": "https://docs.example.com/start",
+                    "crawl_subpages": True,
+                    "scope_mode": "strict_docs",
+                    "scope_path": "/docs",
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        discover_kwargs = discover_mock.call_args.kwargs
+        self.assertEqual(discover_kwargs["scope_mode"], "strict_docs")
+        self.assertEqual(discover_kwargs["scope_path"], "/docs")
+
+    def test_crawl_preview_returns_scored_link_items(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-1",
+            "instance_id": "inst-1",
+            "namespace_id": "company_docs",
+        }
+        fake_container = SimpleNamespace(store=fake_store, ingestion=MagicMock())
+        client = self._build_client(fake_container)
+
+        with patch(
+            "app.routers.resources.DocumentationCrawler.discover",
+            return_value=[
+                "https://svelte.dev/docs/svelte/overview",
+                "https://svelte.dev/docs/svelte/$state",
+                "https://svelte.dev/blog/announcing-svelte-5",
+            ],
+        ):
+            response = client.post(
+                "/resources/crawl/preview",
+                json={
+                    "instance_id": "inst-1",
+                    "namespace_id": "company_docs",
+                    "url": "https://svelte.dev/docs/svelte/overview",
+                    "crawl_subpages": True,
+                    "scope_mode": "same_domain",
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertIn("link_items", body)
+        self.assertEqual(len(body["link_items"]), 3)
+        first = body["link_items"][0]
+        self.assertIn("url", first)
+        self.assertIn("score", first)
+        self.assertIn("reasons", first)
+        self.assertIsInstance(first["reasons"], list)
+        self.assertGreaterEqual(first["score"], body["link_items"][-1]["score"])
+
+    def test_crawl_ingest_processes_urls(self) -> None:
+        fake_store = MagicMock()
+        fake_store.get_knowledge_base.return_value = {
+            "id": "kb-1",
+            "instance_id": "inst-1",
+            "namespace_id": "company_docs",
+            "embedding_model": "minilm",
+            "embedding_dim": 384,
+            "collection_name": "kb_collection",
+        }
+        fake_store.create_resource.side_effect = [{"id": "res-1"}, {"id": "res-2"}]
+
+        fake_ingestion = MagicMock()
+        fake_ingestion.ingest.side_effect = [2, 3]
+
+        fake_container = SimpleNamespace(store=fake_store, ingestion=fake_ingestion)
+        client = self._build_client(fake_container)
+
+        response = client.post(
+            "/resources/crawl/ingest",
+            json={
+                "kb_id": "kb-1",
+                "url": "https://docs.example.com",
+                "crawl_subpages": True,
+                "max_pages": 10,
+                "urls": [
+                    "https://docs.example.com",
+                    "https://docs.example.com/guide",
+                ],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "success")
+        self.assertEqual(body["success_count"], 2)
+        self.assertEqual(body["failed_count"], 0)
+        self.assertEqual(body["total_chunks_indexed"], 5)
+        self.assertEqual(len(body["results"]), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

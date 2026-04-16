@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, Copy, Link2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   Sheet,
@@ -36,6 +37,7 @@ export function KnowledgeBaseDetailSheet({
   knowledgeBase,
   onClose,
 }: KnowledgeBaseDetailSheetProps) {
+  const router = useRouter();
   const { activeKbId, setActiveKb, activeInstanceId, activeNamespaceId } =
     useAppContext();
 
@@ -51,6 +53,19 @@ export function KnowledgeBaseDetailSheet({
     knowledgeBase &&
     activeInstanceId === knowledgeBase.instance_id &&
     activeNamespaceId === knowledgeBase.namespace_id;
+
+  const handleAddResources = () => {
+    if (!knowledgeBase) {
+      return;
+    }
+    const params = new URLSearchParams({
+      kb: knowledgeBase.id,
+      instance: knowledgeBase.instance_id,
+      namespace: knowledgeBase.namespace_id,
+    });
+    setActiveKb(knowledgeBase.id);
+    router.push(`/resources?${params.toString()}`);
+  };
 
   return (
     <Sheet open={!!knowledgeBase} onOpenChange={(open) => !open && onClose()}>
@@ -87,36 +102,54 @@ export function KnowledgeBaseDetailSheet({
 
             <div className="mt-6 space-y-0 px-6 pb-6">
               {canSetActive ? (
-                <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/8 px-3 py-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-[11px] text-emerald-300/70">
-                      {isActive
-                        ? "This knowledge base is active for the current scope."
-                        : "This knowledge base matches the current scope."}
-                    </p>
-                    <button
-                      onClick={() =>
-                        setActiveKb(isActive ? null : knowledgeBase.id)
-                      }
-                      className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium text-emerald-300/75 transition-colors hover:bg-emerald-300/12 hover:text-emerald-200"
-                    >
-                      {isActive ? (
-                        <>
-                          <Check className="h-3 w-3" strokeWidth={1.5} />
-                          Unset
-                        </>
-                      ) : (
-                        "Set Active"
-                      )}
-                    </button>
+                <div className="space-y-2">
+                  <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/8 px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-[11px] text-emerald-300/70">
+                        {isActive
+                          ? "This knowledge base is active for the current scope."
+                          : "This knowledge base matches the current scope."}
+                      </p>
+                      <button
+                        onClick={() =>
+                          setActiveKb(isActive ? null : knowledgeBase.id)
+                        }
+                        className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium text-emerald-300/75 transition-colors hover:bg-emerald-300/12 hover:text-emerald-200"
+                      >
+                        {isActive ? (
+                          <>
+                            <Check className="h-3 w-3" strokeWidth={1.5} />
+                            Unset
+                          </>
+                        ) : (
+                          "Set Active"
+                        )}
+                      </button>
+                    </div>
                   </div>
+                  <button
+                    onClick={handleAddResources}
+                    className="flex h-8 items-center gap-2 rounded-lg border border-primary/25 bg-primary/10 px-3 text-[11px] font-medium text-primary transition-colors hover:bg-primary/15"
+                  >
+                    <Link2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    Add Resources
+                  </button>
                 </div>
               ) : (
-                <div className="rounded-lg border border-white/6 bg-black px-3 py-2.5">
-                  <p className="text-[11px] text-muted-foreground/40">
-                    Select matching instance and namespace in the top bar to set
-                    this as the active knowledge base.
-                  </p>
+                <div className="space-y-2">
+                  <div className="rounded-lg border border-white/6 bg-black px-3 py-2.5">
+                    <p className="text-[11px] text-muted-foreground/40">
+                      Select matching instance and namespace in the top bar to set
+                      this as the active knowledge base.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleAddResources}
+                    className="flex h-8 items-center gap-2 rounded-lg border border-primary/25 bg-primary/10 px-3 text-[11px] font-medium text-primary transition-colors hover:bg-primary/15"
+                  >
+                    <Link2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                    Add Resources
+                  </button>
                 </div>
               )}
 

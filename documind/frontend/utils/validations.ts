@@ -18,9 +18,22 @@ export const createKnowledgeBaseSchema = z.object({
 export const ingestResourceSchema = z.object({
   source_type: z.enum(['text', 'markdown', 'pdf', 'html', 'docx']),
   content: z.string().min(1, 'Content is required'),
-  source_ref: z.string().min(1, 'Source reference is required'),
+  source_ref: z.string().optional(),
   user_id: z.string().optional(),
   session_id: z.string().optional(),
+})
+
+export const crawlPreviewSchema = z.object({
+  kb_id: z.string().optional(),
+  instance_id: z.string().optional(),
+  namespace_id: z.string().default('company_docs'),
+  url: z.string().url('Please enter a valid URL'),
+  crawl_subpages: z.boolean().default(false),
+  max_pages: z.number().min(1).max(100).default(20),
+})
+
+export const crawlIngestSchema = crawlPreviewSchema.extend({
+  urls: z.array(z.string().url()).optional(),
 })
 
 export const searchSchema = z.object({
@@ -36,6 +49,7 @@ export const askSchema = z.object({
 export type CreateInstanceBody = z.infer<typeof createInstanceSchema>
 export type CreateKnowledgeBaseBody = z.infer<typeof createKnowledgeBaseSchema>
 export type IngestResourceBody = z.infer<typeof ingestResourceSchema>
+export type CrawlPreviewBody = z.infer<typeof crawlPreviewSchema>
+export type CrawlIngestBody = z.infer<typeof crawlIngestSchema>
 export type SearchBody = z.infer<typeof searchSchema>
 export type AskBody = z.infer<typeof askSchema>
-

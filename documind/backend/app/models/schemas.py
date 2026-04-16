@@ -175,6 +175,29 @@ class ResourceIngestRequest(BaseModel):
         return self
 
 
+class ResourceCrawlRequest(BaseModel):
+    kb_id: str | None = None
+    instance_id: str | None = None
+    namespace_id: str = "company_docs"
+    url: str
+    crawl_subpages: bool = False
+    max_pages: int = Field(default=20, ge=1, le=100)
+    scope_mode: str = "strict_docs"
+    scope_path: str | None = None
+
+    @model_validator(mode="after")
+    def validate_target(self) -> "ResourceCrawlRequest":
+        if not self.kb_id and not self.instance_id:
+            raise ValueError("Provide either kb_id or instance_id")
+        if self.scope_mode not in {"strict_docs", "same_domain"}:
+            raise ValueError("scope_mode must be one of: strict_docs, same_domain")
+        return self
+
+
+class ResourceCrawlIngestRequest(ResourceCrawlRequest):
+    urls: list[str] = Field(default_factory=list)
+
+
 class MemoryIngestRequest(BaseModel):
     instance_id: str
     conversation_id: str

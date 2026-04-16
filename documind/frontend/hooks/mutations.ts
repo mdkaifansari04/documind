@@ -78,6 +78,21 @@ export const useUploadResource = () => {
   })
 }
 
+export const useCrawlPreview = () =>
+  useMutation({
+    mutationFn: ResourceDataAccess.crawlPreview,
+  })
+
+export const useCrawlIngest = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ResourceDataAccess.crawlIngest,
+    onSuccess: async () => {
+      await invalidateResourceData(queryClient)
+    },
+  })
+}
+
 export const useSearchInstanceMutation = () =>
   useMutation({
     mutationFn: QueryDataAccess.searchInstance,

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import unittest
 
+import httpx
+
 from mcp_server.service import DocuMindMCPService, MCPTimeouts
 
 
@@ -60,6 +62,21 @@ class FakeAPIClient:
         if not self._get_responses:
             raise AssertionError("No fake GET response left for call")
         return self._get_responses.pop(0)
+
+
+class FailingGetAPIClient(FakeAPIClient):
+    def __init__(self, exc: Exception):
+        super().__init__(post_responses=[], get_responses=[])
+        self._exc = exc
+
+    def get_json(self, path: str, params: dict, timeout_seconds: int) -> tuple[int, dict]:
+        self.get_calls.append((path, params, timeout_seconds))
+        raise self._exc
+
+
+class UnwritableContextStore(FakeContextStore):
+    def set(self, *, context_id: str, instance_id: str, namespace_id: str):
+        raise PermissionError("Operation not permitted")
 
 
 class MCPToolSearchTests(unittest.TestCase):
@@ -379,6 +396,39 @@ class MCPToolOtherTests(unittest.TestCase):
 
         self.assertEqual(result["status"], "error")
         self.assertEqual(result["meta"]["error"], "not_found")
+
+    def test_list_instances_surfaces_network_blocked_connect_error(self) -> None:
+        req = httpx.Request("GET", "http://localhost:8000/instances")
+        fake_client = FailingGetAPIClient(httpx.ConnectError("Operation not permitted", request=req))
+        service = DocuMindMCPService(api_client=fake_client, timeouts=self.timeouts)
+
+        result = service.list_instances()
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["meta"]["error"], "network_blocked")
+        self.assertEqual(result["meta"]["reason"], "network_permission_denied")
+        self.assertIn("Network access is blocked", result["text"])
+
+    def test_set_active_context_returns_structured_error_when_store_unwritable(self) -> None:
+        fake_client = FakeAPIClient(
+            get_responses=[
+                (200, {"data": [{"id": "inst-1", "name": "Valid"}]}),
+                (200, {"data": []}),
+            ]
+        )
+        service = DocuMindMCPService(
+            api_client=fake_client,
+            timeouts=self.timeouts,
+            context_store=UnwritableContextStore(),
+            default_context_id="default",
+        )
+
+        result = service.set_active_context(instance_id="inst-1", namespace_id="company_docs")
+
+        self.assertEqual(result["status"], "error")
+        self.assertEqual(result["meta"]["error"], "server_error")
+        self.assertEqual(result["meta"]["reason"], "context_store_unwritable")
+        self.assertIn("Failed to persist active context", result["text"])
 
 
 if __name__ == "__main__":

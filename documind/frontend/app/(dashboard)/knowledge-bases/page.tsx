@@ -372,6 +372,8 @@ export default function KnowledgeBasesPage() {
       <CreateKnowledgeBaseDialog
         open={createOpen}
         onOpenChange={setCreateOpen}
+        defaultInstanceId={instanceFilter !== "all" ? instanceFilter : undefined}
+        lockInstance={instanceFilter !== "all"}
       />
       <KnowledgeBaseDetailSheet
         knowledgeBase={selectedKb}

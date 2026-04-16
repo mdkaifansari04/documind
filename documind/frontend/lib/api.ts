@@ -7,6 +7,10 @@ import { post, queryApi } from '@/data-access/client'
 import type {
   AdvancedQueryRequest,
   AdvancedSearchRequest,
+  CrawlIngestRequest,
+  CrawlIngestResponse,
+  CrawlPreviewRequest,
+  CrawlPreviewResponse,
   CollectionsResponse,
   CreateInstanceRequest,
   CreateKnowledgeBaseRequest,
@@ -58,6 +62,14 @@ class LegacyApiCompatibilityClient {
     return ResourceDataAccess.uploadResource(formData)
   }
 
+  async crawlPreview(body: CrawlPreviewRequest): Promise<CrawlPreviewResponse> {
+    return ResourceDataAccess.crawlPreview(body)
+  }
+
+  async crawlIngest(body: CrawlIngestRequest): Promise<CrawlIngestResponse> {
+    return ResourceDataAccess.crawlIngest(body)
+  }
+
   async searchInstance(
     body: SearchInstanceRequest
   ): Promise<SearchInstanceResponse> {
@@ -105,4 +117,3 @@ class LegacyApiCompatibilityClient {
 
 export const api = new LegacyApiCompatibilityClient()
 export default api
-

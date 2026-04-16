@@ -39,7 +39,7 @@ export interface KnowledgeBase {
 export interface Resource {
   id: string
   knowledge_base_id: string
-  source_type: 'text' | 'markdown' | 'pdf' | 'html' | 'docx'
+  source_type: 'text' | 'markdown' | 'pdf' | 'html' | 'docx' | 'url'
   source_ref: string
   chunks_indexed: number
   status: 'processing' | 'done' | 'failed'
@@ -113,11 +113,67 @@ export interface IngestResourceRequest {
   instance_id?: string
   namespace_id?: string
   kb_id?: string
-  source_type: 'text' | 'markdown' | 'pdf' | 'html' | 'docx'
+  source_type: 'text' | 'markdown' | 'pdf' | 'html' | 'docx' | 'url'
   content: string
-  source_ref: string
+  source_ref?: string
   user_id?: string
   session_id?: string
+}
+
+export interface CrawlPreviewRequest {
+  kb_id?: string
+  instance_id?: string
+  namespace_id?: string
+  url: string
+  crawl_subpages?: boolean
+  max_pages?: number
+  scope_mode?: 'strict_docs' | 'same_domain'
+  scope_path?: string
+  seed_urls?: string[]
+}
+
+export interface CrawlPreviewLinkItem {
+  url: string
+  score: number
+  reasons: string[]
+}
+
+export interface CrawlPreviewResponse {
+  status: 'success' | 'error'
+  kb_id: string
+  instance_id: string
+  namespace_id: string
+  root_url: string
+  crawl_subpages: boolean
+  scope_mode: 'strict_docs' | 'same_domain'
+  scope_path: string
+  count: number
+  links: string[]
+  link_items?: CrawlPreviewLinkItem[]
+}
+
+export interface CrawlIngestRequest extends CrawlPreviewRequest {
+  urls?: string[]
+}
+
+export interface CrawlIngestResultItem {
+  url: string
+  status: 'success' | 'failed'
+  resource_id: string
+  chunks_indexed?: number
+  error?: string
+}
+
+export interface CrawlIngestResponse {
+  status: 'success' | 'error'
+  kb_id: string
+  instance_id: string
+  namespace_id: string
+  total_links: number
+  success_count: number
+  failed_count: number
+  total_chunks_indexed: number
+  results: CrawlIngestResultItem[]
 }
 
 export interface SearchInstanceRequest {
@@ -205,4 +261,3 @@ export type ResourceQueryParams = {
   namespace_id?: string
   kb_id?: string
 }
-

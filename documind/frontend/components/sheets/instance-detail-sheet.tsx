@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Database, Copy } from "lucide-react";
+import { Database, Copy, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { CreateKnowledgeBaseDialog } from "@/components/dialogs/create-kb-dialog";
 import {
   Sheet,
   SheetContent,
@@ -25,6 +27,7 @@ export function InstanceDetailSheet({
   instance,
   onClose,
 }: InstanceDetailSheetProps) {
+  const [createKbOpen, setCreateKbOpen] = useState(false);
   const { activeInstanceId, setActiveInstance } = useAppContext();
 
   const { data: knowledgeBases, isLoading: loadingKbs } = useKnowledgeBases(
@@ -147,12 +150,21 @@ export function InstanceDetailSheet({
                   <h3 className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/50">
                     Knowledge Bases ({knowledgeBases?.length ?? 0})
                   </h3>
-                  <Link
-                    href={`/knowledge-bases?instance=${instance.id}`}
-                    className="text-[11px] text-muted-foreground/40 underline underline-offset-4 decoration-muted-foreground/20 transition-colors hover:text-white hover:decoration-white/40"
-                  >
-                    View all
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setCreateKbOpen(true)}
+                      className="inline-flex h-7 items-center gap-1 rounded-md border border-white/8 bg-white/3 px-2 text-[11px] text-muted-foreground/60 transition-colors hover:bg-white/6 hover:text-white"
+                    >
+                      <Plus className="h-3 w-3" strokeWidth={1.5} />
+                      Create KB
+                    </button>
+                    <Link
+                      href={`/knowledge-bases?instance=${instance.id}`}
+                      className="text-[11px] text-muted-foreground/40 underline underline-offset-4 decoration-muted-foreground/20 transition-colors hover:text-white hover:decoration-white/40"
+                    >
+                      View all
+                    </Link>
+                  </div>
                 </div>
                 {loadingKbs ? (
                   <div className="space-y-2">
@@ -202,6 +214,12 @@ export function InstanceDetailSheet({
           </>
         )}
       </SheetContent>
+      <CreateKnowledgeBaseDialog
+        open={createKbOpen}
+        onOpenChange={setCreateKbOpen}
+        defaultInstanceId={instance?.id}
+        lockInstance
+      />
     </Sheet>
   );
 }

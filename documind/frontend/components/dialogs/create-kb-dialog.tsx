@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -33,15 +34,22 @@ import {
   type CreateKnowledgeBaseBody,
 } from "@/utils/validations";
 import { useAppContext } from "@/lib/context";
+import type { KnowledgeBase } from "@/lib/types";
 
 interface CreateKnowledgeBaseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultInstanceId?: string;
+  lockInstance?: boolean;
+  onCreated?: (knowledgeBase: KnowledgeBase) => void;
 }
 
 export function CreateKnowledgeBaseDialog({
   open,
   onOpenChange,
+  defaultInstanceId,
+  lockInstance = false,
+  onCreated,
 }: CreateKnowledgeBaseDialogProps) {
   const { activeInstanceId } = useAppContext();
   const createMutation = useCreateKnowledgeBase();
@@ -51,7 +59,7 @@ export function CreateKnowledgeBaseDialog({
   const form = useForm<CreateKnowledgeBaseBody>({
     resolver: zodResolver(createKnowledgeBaseSchema),
     defaultValues: {
-      instance_id: activeInstanceId || "",
+      instance_id: defaultInstanceId || activeInstanceId || "",
       namespace_id: "",
       name: "",
       embedding_profile: "general_text_search",
@@ -59,12 +67,27 @@ export function CreateKnowledgeBaseDialog({
     },
   });
 
+  useEffect(() => {
+    if (!open) return;
+    const resolvedInstanceId = defaultInstanceId || activeInstanceId || "";
+    form.reset({
+      instance_id: resolvedInstanceId,
+      namespace_id: "",
+      name: "",
+      embedding_profile: "general_text_search",
+      distance_metric: "cosine",
+      llm_profile: "",
+      embedding_model: "",
+    });
+  }, [open, defaultInstanceId, activeInstanceId, form]);
+
   const onSubmit = (data: CreateKnowledgeBaseBody) => {
     createMutation.mutate(data, {
       onSuccess: (kb) => {
         toast.success("Knowledge Base created", {
           description: `"${kb.name}" has been created successfully.`,
         });
+        onCreated?.(kb);
         onOpenChange(false);
         form.reset();
       },
@@ -106,8 +129,16 @@ export function CreateKnowledgeBaseDialog({
               <Select
                 value={form.watch("instance_id")}
                 onValueChange={(value) => form.setValue("instance_id", value)}
+                disabled={lockInstance}
               >
-                <SelectTrigger id="instance_id" className={triggerClassName}>
+                <SelectTrigger
+                  id="instance_id"
+                  className={`${triggerClassName} ${
+                    lockInstance
+                      ? "cursor-not-allowed opacity-60"
+                      : ""
+                  }`}
+                >
                   <SelectValue placeholder="Select an instance" />
                 </SelectTrigger>
                 <SelectContent className={contentClassName}>
