@@ -1,38 +1,36 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const satoshiSans = localFont({
-  variable: "--font-dm-sans",
-  src: [
-    {
-      path: "../public/fonts/Satoshi-Regular.otf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/Satoshi-Medium.otf",
-      weight: "500",
-      style: "normal",
-    },
-    {
-      path: "../public/fonts/Satoshi-Bold.otf",
-      weight: "700",
-      style: "normal",
-    },
-  ],
-});
-
-const satoshiMono = localFont({
-  variable: "--font-dm-mono",
-  src: "../public/fonts/Satoshi-Medium.otf",
-  weight: "500",
-  style: "normal",
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
   title: "DocuMind Documentation",
-  description: "Architecture, components, DCLI, and MCP reference for DocuMind.",
+  description:
+    "AI-powered internal documentation intelligence system. Ingests private docs, stores vectors, retrieves relevant context, and produces grounded answers with sources.",
+  generator: "v0.app",
+  icons: {
+    icon: [
+      {
+        url: "/icon-light-32x32.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/icon-dark-32x32.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+      {
+        url: "/icon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export default function RootLayout({
@@ -43,9 +41,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${satoshiSans.variable} ${satoshiMono.variable} h-full antialiased`}
+      className={geistMono.variable}
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="font-sans antialiased bg-background text-foreground">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+        {process.env.NODE_ENV === "production" && <Analytics />}
+      </body>
     </html>
   );
 }

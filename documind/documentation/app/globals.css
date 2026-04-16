@@ -1,63 +1,303 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
+@custom-variant dark (&:is(.dark *));
+
+/* Satoshi Font Family */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-LightItalic.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Italic.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-MediumItalic.otf') format('opentype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-BoldItalic.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi-BlackItalic.otf') format('opentype');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Light Theme */
 :root {
+  /* DocuMind Design Tokens */
+  --poof-base: #ffffff;
+  --poof-violet: #016239;
+  --poof-accent: #016239;
+  --poof-peach: #c4875c;
+  --poof-mint: #3d8c6a;
+  --poof-mist: #6b6b6b;
+
+  /* Surfaces */
+  --poof-card: #f8f8f8;
+  --poof-row: #f4f4f4;
+  --poof-border: rgba(0, 0, 0, 0.08);
+  --poof-border-hover: rgba(0, 0, 0, 0.15);
+
+  /* Code block colors - muted, not primary */
+  --code-text: #5c6370;
+  --code-keyword: #a626a4;
+  --code-string: #50a14f;
+  --code-bg: #f6f8fa;
+
+  /* Semantic Tokens */
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --card: #f8f8f8;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #016239;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f4;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f0f0f0;
+  --muted-foreground: #6b6b6b;
+  --accent: #016239;
+  --accent-foreground: #ffffff;
+  --destructive: #dc3545;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.08);
+  --ring: #016239;
+  --chart-1: #016239;
+  --chart-2: #02844e;
+  --chart-3: #3d8c6a;
+  --chart-4: #c4875c;
+  --chart-5: #6b6b6b;
+  --radius: 0.5rem;
+  --sidebar-bg: #f8f9fa;
+  --sidebar: #f8f9fa;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #016239;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f0f0f0;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-ring: #016239;
+}
+
+/* Dark Theme */
+.dark {
+  /* DocuMind Design Tokens */
   --poof-base: #0d0d0d;
-  --poof-violet: #c8b8ff;
-  --poof-accent: #7c5cfc;
+  --poof-violet: #34d399;
+  --poof-accent: #10b981;
   --poof-peach: #ffcba4;
   --poof-mint: #b6f0d8;
   --poof-mist: #a0a0a0;
-  --background: var(--poof-base);
-  --foreground: #ffffff;
+
+  /* Surfaces */
+  --poof-card: #111111;
+  --poof-row: #141414;
+  --poof-border: rgba(255, 255, 255, 0.08);
+  --poof-border-hover: rgba(255, 255, 255, 0.15);
+
+  /* Code block colors - muted, not primary */
+  --code-text: #abb2bf;
+  --code-keyword: #c678dd;
+  --code-string: #98c379;
+  --code-bg: #1a1a1a;
+
+  /* Semantic Tokens */
+  --background: #0d0d0d;
+  --foreground: #e8e8e8;
+  --card: #111111;
+  --card-foreground: #e8e8e8;
+  --popover: #111111;
+  --popover-foreground: #e8e8e8;
+  --primary: #10b981;
+  --primary-foreground: #ffffff;
+  --secondary: #141414;
+  --secondary-foreground: #e8e8e8;
+  --muted: #1a1a1a;
+  --muted-foreground: #a0a0a0;
+  --accent: #34d399;
+  --accent-foreground: #0d0d0d;
+  --destructive: #ff6b6b;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.08);
+  --ring: #10b981;
+  --chart-1: #10b981;
+  --chart-2: #34d399;
+  --chart-3: #b6f0d8;
+  --chart-4: #ffcba4;
+  --chart-5: #a0a0a0;
+  --radius: 0.5rem;
+  --sidebar-bg: #0d0d0d;
+  --sidebar: #0d0d0d;
+  --sidebar-foreground: #e8e8e8;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #141414;
+  --sidebar-accent-foreground: #e8e8e8;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #10b981;
 }
 
 @theme inline {
+  --font-sans: 'Satoshi', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* DocuMind Custom Colors */
   --color-poof-base: var(--poof-base);
   --color-poof-violet: var(--poof-violet);
   --color-poof-accent: var(--poof-accent);
   --color-poof-peach: var(--poof-peach);
   --color-poof-mint: var(--poof-mint);
   --color-poof-mist: var(--poof-mist);
-  --font-sans: var(--font-dm-sans);
-  --font-mono: var(--font-dm-mono);
+  --color-poof-card: var(--poof-card);
+  --color-poof-row: var(--poof-row);
+  --color-code-text: var(--code-text);
+  --color-code-keyword: var(--code-keyword);
+  --color-code-string: var(--code-string);
+  --color-code-bg: var(--code-bg);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Smooth scroll */
 html {
   scroll-behavior: smooth;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(circle at 8% 8%, rgba(200, 184, 255, 0.12), transparent 28%),
-    radial-gradient(circle at 90% 4%, rgba(182, 240, 216, 0.1), transparent 34%),
-    linear-gradient(180deg, #0d0d0d 0%, #111111 45%, #0d0d0d 100%);
+/* Selection styling */
+::selection {
+  background: rgba(1, 98, 57, 0.3);
+  color: var(--foreground);
 }
 
-.grid-overlay {
-  position: relative;
+.dark ::selection {
+  background: rgba(16, 185, 129, 0.3);
+  color: #ffffff;
 }
 
-.grid-overlay::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 24px 24px;
-  mask-image: radial-gradient(circle at center, black 25%, transparent 88%);
-  opacity: 0.25;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
