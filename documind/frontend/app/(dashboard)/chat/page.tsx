@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
 import {
   Send,
   Loader2,
@@ -16,13 +15,6 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -41,21 +33,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet'
 import { Slider } from '@/components/ui/slider'
+import { useQueryAdvancedMutation, useQueryInstanceMutation } from '@/hooks/mutations'
+import { useInstances, useKnowledgeBases } from '@/hooks/queries'
 import { cn } from '@/lib/utils'
-import api from '@/lib/api'
 import type {
   ChatMessage,
   ChatScope,
   SearchResult,
-  ApiError,
 } from '@/lib/types'
 
 function generateId() {
@@ -76,11 +61,6 @@ export default function ChatWorkspacePage() {
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputValue, setInputValue] = useState('')
-  const [expandedSources, setExpandedSources] = useState<Set<string>>(new Set())
-  const [inspectorOpen, setInspectorOpen] = useState(false)
-  const [selectedMessageSources, setSelectedMessageSources] = useState<
-    SearchResult[]
-  >([])
 
   // Scope state
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
@@ -91,18 +71,15 @@ export default function ChatWorkspacePage() {
   const [allNamespaces, setAllNamespaces] = useState(false)
   const [useAdvanced, setUseAdvanced] = useState(false)
   const [topK, setTopK] = useState(5)
+  const queryInstanceMutation = useQueryInstanceMutation()
+  const queryAdvancedMutation = useQueryAdvancedMutation()
+  const isQuerying =
+    queryInstanceMutation.isPending || queryAdvancedMutation.isPending
 
   // Fetch data
-  const { data: instances } = useQuery({
-    queryKey: ['instances'],
-    queryFn: () => api.getInstances(),
-  })
+  const { data: instances } = useInstances()
 
-  const { data: knowledgeBases } = useQuery({
-    queryKey: ['knowledge-bases', selectedInstanceId],
-    queryFn: () => api.getKnowledgeBases(selectedInstanceId || undefined),
-    enabled: !!selectedInstanceId,
-  })
+  const { data: knowledgeBases } = useKnowledgeBases(selectedInstanceId || undefined)
 
   // Get unique namespaces for selected instance
   const namespaces =
@@ -143,68 +120,9 @@ export default function ChatWorkspacePage() {
   const isMultiScope =
     selectedNamespaces.length > 1 || selectedKbs.length > 1 || allNamespaces
 
-  const queryMutation = useMutation({
-    mutationFn: async (question: string) => {
-      if (!selectedInstanceId || selectedNamespaces.length === 0) {
-        throw new Error('Please select an instance and namespace')
-      }
-
-      // For multi-scope, we'll use the first namespace (primary scope)
-      // and show a banner indicating preview mode
-      const primaryNamespace = selectedNamespaces[0]
-
-      if (useAdvanced) {
-        return api.queryAdvanced({
-          instance_id: selectedInstanceId,
-          namespace_id: primaryNamespace,
-          question,
-          top_k: topK,
-          mode: 'hybrid',
-          hybrid: {
-            method: 'rrf',
-            dense_weight: 0.7,
-            keyword_weight: 0.3,
-          },
-        })
-      }
-
-      return api.queryInstance({
-        instance_id: selectedInstanceId,
-        namespace_id: primaryNamespace,
-        question,
-        top_k: topK,
-      })
-    },
-    onSuccess: (data) => {
-      const scope = getCurrentScope()
-
-      // Add assistant message
-      const assistantMessage: ChatMessage = {
-        id: generateId(),
-        role: 'assistant',
-        content: data.answer,
-        createdAt: new Date().toISOString(),
-        scopeSnapshot: scope,
-        responseMs: data.response_ms,
-        llmProfile: data.llm_profile,
-        sources: data.sources,
-      }
-
-      setMessages((prev) => [...prev, assistantMessage])
-    },
-    onError: (error: ApiError) => {
-      toast.error('Failed to get response', {
-        description: error.message,
-      })
-
-      // Remove the user message on error
-      setMessages((prev) => prev.slice(0, -1))
-    },
-  })
-
   const handleSubmit = () => {
     const trimmedInput = inputValue.trim()
-    if (!trimmedInput || queryMutation.isPending) return
+    if (!trimmedInput || isQuerying) return
 
     if (!hasValidScope) {
       toast.error('Scope required', {
@@ -226,7 +144,62 @@ export default function ChatWorkspacePage() {
 
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
-    queryMutation.mutate(trimmedInput)
+
+    const primaryNamespace = selectedNamespaces[0]
+    const onSuccess = (data: {
+      answer: string
+      response_ms: number
+      llm_profile: string
+      sources: SearchResult[]
+    }) => {
+      const scopeSnapshot = getCurrentScope()
+      const assistantMessage: ChatMessage = {
+        id: generateId(),
+        role: 'assistant',
+        content: data.answer,
+        createdAt: new Date().toISOString(),
+        scopeSnapshot,
+        responseMs: data.response_ms,
+        llmProfile: data.llm_profile,
+        sources: data.sources,
+      }
+      setMessages((prev) => [...prev, assistantMessage])
+    }
+    const onError = (error: Error) => {
+      toast.error('Failed to get response', {
+        description: error.message,
+      })
+      setMessages((prev) => prev.slice(0, -1))
+    }
+
+    if (useAdvanced) {
+      queryAdvancedMutation.mutate(
+        {
+          instance_id: selectedInstanceId!,
+          namespace_id: primaryNamespace,
+          question: trimmedInput,
+          top_k: topK,
+          mode: 'hybrid',
+          hybrid: {
+            method: 'rrf',
+            dense_weight: 0.7,
+            keyword_weight: 0.3,
+          },
+        },
+        { onSuccess, onError }
+      )
+      return
+    }
+
+    queryInstanceMutation.mutate(
+      {
+        instance_id: selectedInstanceId!,
+        namespace_id: primaryNamespace,
+        question: trimmedInput,
+        top_k: topK,
+      },
+      { onSuccess, onError }
+    )
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -255,23 +228,6 @@ export default function ChatWorkspacePage() {
         ? prev.filter((id) => id !== kbId)
         : [...prev, kbId]
     )
-  }
-
-  const openSourceInspector = (sources: SearchResult[]) => {
-    setSelectedMessageSources(sources)
-    setInspectorOpen(true)
-  }
-
-  const toggleSourceExpand = (id: string) => {
-    setExpandedSources((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
   }
 
   return (
@@ -446,7 +402,7 @@ export default function ChatWorkspacePage() {
         </div>
 
         {/* Chat Thread */}
-        <div className="flex flex-1 flex-col bg-[#111]">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111]">
           {/* Multi-scope banner */}
           {isMultiScope && hasValidScope && (
             <Alert className="mx-4 mt-4 border-violet-400/20 bg-violet-400/8">
@@ -459,7 +415,7 @@ export default function ChatWorkspacePage() {
           )}
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4">
+          <ScrollArea className="min-h-0 flex-1 p-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <div className="mb-4 rounded-full border border-white/10 bg-white/4 p-4">
@@ -520,21 +476,15 @@ export default function ChatWorkspacePage() {
                           {message.sources.slice(0, 3).map((source, i) => (
                             <Badge
                               key={i}
-                              className="cursor-pointer border border-white/6 bg-white/3 text-[10px] text-white/75 hover:bg-white/8"
-                              onClick={() =>
-                                openSourceInspector(message.sources!)
-                              }
+                              className="border border-white/6 bg-white/3 text-[10px] text-white/75"
                             >
                               <FileText className="mr-1 h-3 w-3" />
-                              {source.source_ref}
+                              {source.source_ref} ({source.score.toFixed(3)})
                             </Badge>
                           ))}
                           {message.sources.length > 3 && (
                             <Badge
-                              className="cursor-pointer border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60"
-                              onClick={() =>
-                                openSourceInspector(message.sources!)
-                              }
+                              className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60"
                             >
                               +{message.sources.length - 3} more
                             </Badge>
@@ -546,7 +496,7 @@ export default function ChatWorkspacePage() {
                 ))}
 
                 {/* Loading indicator */}
-                {queryMutation.isPending && (
+                {isQuerying && (
                   <div className="flex justify-start">
                     <div className="flex items-center gap-2 rounded-lg border border-white/6 bg-[#141414] px-4 py-3">
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -584,7 +534,7 @@ export default function ChatWorkspacePage() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  disabled={!hasValidScope || queryMutation.isPending}
+                  disabled={!hasValidScope || isQuerying}
                   rows={2}
                   className="resize-none rounded-lg border-white/6 bg-white/3 pr-20 text-xs placeholder:text-muted-foreground/30 focus-visible:border-white/12 focus-visible:ring-0"
                 />
@@ -615,10 +565,10 @@ export default function ChatWorkspacePage() {
                 disabled={
                   !hasValidScope ||
                   !inputValue.trim() ||
-                  queryMutation.isPending
+                  isQuerying
                 }
               >
-                {queryMutation.isPending ? (
+                {isQuerying ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <Send className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -653,75 +603,6 @@ export default function ChatWorkspacePage() {
           </div>
         </div>
 
-        {/* Source Inspector Sheet */}
-        <Sheet open={inspectorOpen} onOpenChange={setInspectorOpen}>
-          <SheetContent className="sm:max-w-lg border-white/6 bg-[#111] p-0 gap-0">
-            <SheetHeader className="px-6 pt-6 pb-0">
-              <SheetTitle className="text-sm font-medium text-white">
-                Source Citations
-              </SheetTitle>
-              <SheetDescription className="text-xs text-muted-foreground/50">
-                Documents used to generate this response
-              </SheetDescription>
-            </SheetHeader>
-            <ScrollArea className="mt-4 h-[calc(100vh-10rem)] px-6 pb-6">
-              <div className="space-y-3 pr-1">
-                {selectedMessageSources.map((source, index) => (
-                  <Card key={source.id} className="border-white/6 bg-black">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <FileText
-                            className="h-3.5 w-3.5 text-muted-foreground/35"
-                            strokeWidth={1.5}
-                          />
-                          <CardTitle className="text-sm text-white/90">
-                            {source.source_ref}
-                          </CardTitle>
-                        </div>
-                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-white/75">
-                          {source.score.toFixed(3)}
-                        </Badge>
-                      </div>
-                      <CardDescription className="flex gap-2 text-xs text-muted-foreground/45">
-                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
-                          {source.namespace_id}
-                        </Badge>
-                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
-                          Chunk {source.chunk_index}
-                        </Badge>
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p
-                        className={cn(
-                          'text-xs text-muted-foreground/45',
-                          expandedSources.has(String(source.id))
-                            ? ''
-                            : 'line-clamp-4'
-                        )}
-                      >
-                        {source.text}
-                      </p>
-                      {source.text.length > 200 && (
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="h-auto p-0 text-[11px] text-muted-foreground/55 hover:text-white"
-                          onClick={() => toggleSourceExpand(String(source.id))}
-                        >
-                          {expandedSources.has(String(source.id))
-                            ? 'Show less'
-                            : 'Show more'}
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
         </div>
       </div>
     </TooltipProvider>
