@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, useMemo, ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -45,15 +45,10 @@ interface DocsLayoutProps {
 export function DocsLayout({ children, pageId = 'overview', title, description, breadcrumbs }: DocsLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const { setTheme, resolvedTheme } = useTheme();
   const pathname = usePathname();
 
-  const tocItems = tocItemsMap[pageId] || [];
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const tocItems = useMemo(() => tocItemsMap[pageId] || [], [pageId]);
 
   // Scrollspy for TOC
   useEffect(() => {
@@ -117,19 +112,17 @@ export function DocsLayout({ children, pageId = 'overview', title, description, 
               <span className="font-semibold text-foreground">DocuMind</span>
             </Link>
           </div>
-          {mounted && (
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-secondary transition-colors"
-              aria-label="Toggle theme"
-            >
-              {resolvedTheme === 'dark' ? (
-                <Sun className="w-5 h-5 text-foreground" />
-              ) : (
-                <Moon className="w-5 h-5 text-foreground" />
-              )}
-            </button>
-          )}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            aria-label="Toggle theme"
+          >
+            {resolvedTheme === 'dark' ? (
+              <Sun className="w-5 h-5 text-foreground" />
+            ) : (
+              <Moon className="w-5 h-5 text-foreground" />
+            )}
+          </button>
         </div>
       </header>
 
@@ -165,19 +158,17 @@ export function DocsLayout({ children, pageId = 'overview', title, description, 
                 </div>
               </Link>
               <div className="flex items-center gap-2">
-                {mounted && (
-                  <button
-                    onClick={toggleTheme}
-                    className="hidden lg:flex p-1.5 rounded-md hover:bg-sidebar-accent transition-colors"
-                    aria-label="Toggle theme"
-                  >
-                    {resolvedTheme === 'dark' ? (
-                      <Sun className="w-4 h-4 text-muted-foreground" />
-                    ) : (
-                      <Moon className="w-4 h-4 text-muted-foreground" />
-                    )}
-                  </button>
-                )}
+                <button
+                  onClick={toggleTheme}
+                  className="hidden lg:flex p-1.5 rounded-md hover:bg-sidebar-accent transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {resolvedTheme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-muted-foreground" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-muted-foreground" />
+                  )}
+                </button>
                 <button
                   onClick={() => setSidebarOpen(false)}
                   className="lg:hidden p-1.5 rounded-md hover:bg-sidebar-accent transition-colors"
@@ -342,7 +333,6 @@ function MobileToc({
   onSelect: (id: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const currentItem = items.find(item => item.id === activeSection) || items[0];
 
   return (
     <div className="xl:hidden fixed bottom-4 right-4 z-30">
