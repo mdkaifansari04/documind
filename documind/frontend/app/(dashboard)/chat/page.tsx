@@ -48,11 +48,16 @@ function generateId() {
 }
 
 const checkboxClassName =
-  'h-4 w-4 border-white/40 bg-black/50 data-[state=checked]:border-violet-300/80 data-[state=checked]:bg-violet-300/80 data-[state=checked]:text-black'
+  'h-4 w-4 border-white/40 bg-black/50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground'
 const switchClassName =
-  'border-white/15 data-[state=unchecked]:bg-white/12 data-[state=checked]:bg-violet-400/45'
+  'border-white/15 data-[state=unchecked]:bg-white/12 data-[state=checked]:bg-primary [&_[data-slot=switch-thumb]]:bg-primary-foreground'
 const sliderClassName =
-  '[&_[data-slot=slider-track]]:bg-white/10 [&_[data-slot=slider-range]]:bg-violet-300/60 [&_[data-slot=slider-thumb]]:border-white/25 [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-thumb]]:size-3.5'
+  '[&_[data-slot=slider-track]]:bg-white/10 [&_[data-slot=slider-range]]:bg-primary [&_[data-slot=slider-thumb]]:border-primary/35 [&_[data-slot=slider-thumb]]:bg-primary-foreground [&_[data-slot=slider-thumb]]:size-3.5'
+
+function formatResponseTimeInSeconds(ms: number) {
+  const seconds = ms / 1000
+  return `${seconds.toFixed(seconds >= 10 ? 1 : 2)}s`
+}
 
 export default function ChatWorkspacePage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -304,7 +309,7 @@ export default function ChatWorkspacePage() {
                           className={cn(
                             'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors',
                             selectedNamespaces.includes(namespace)
-                              ? 'border border-violet-400/20 bg-violet-400/8 text-white'
+                              ? 'border border-primary/30 bg-primary/12 text-white'
                               : 'text-muted-foreground/55 hover:bg-white/6 hover:text-white'
                           )}
                         >
@@ -342,7 +347,7 @@ export default function ChatWorkspacePage() {
                           className={cn(
                             'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs transition-colors',
                             selectedKbs.includes(kb.id)
-                              ? 'border border-violet-400/20 bg-violet-400/8 text-white'
+                              ? 'border border-primary/30 bg-primary/12 text-white'
                               : 'text-muted-foreground/55 hover:bg-white/6 hover:text-white'
                           )}
                         >
@@ -405,9 +410,9 @@ export default function ChatWorkspacePage() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111]">
           {/* Multi-scope banner */}
           {isMultiScope && hasValidScope && (
-            <Alert className="mx-4 mt-4 border-violet-400/20 bg-violet-400/8">
-              <Info className="h-4 w-4 text-violet-300/85" />
-              <AlertDescription className="text-xs text-white/75">
+            <Alert className="mx-4 mt-4 border-primary/25 bg-primary/10">
+              <Info className="h-4 w-4 text-primary" />
+              <AlertDescription className="text-xs text-white/80">
                 Multi-scope orchestration is in preview mode; currently
                 executing primary scope only.
               </AlertDescription>
@@ -444,7 +449,7 @@ export default function ChatWorkspacePage() {
                       className={cn(
                         'max-w-[80%] rounded-lg border px-4 py-3',
                         message.role === 'user'
-                          ? 'border-violet-400/30 bg-violet-400/18 text-white'
+                          ? 'border-primary/35 bg-primary/18 text-white'
                           : 'border-white/6 bg-[#141414] text-white/85'
                       )}
                     >
@@ -453,18 +458,18 @@ export default function ChatWorkspacePage() {
                       </p>
 
                       {/* Message metadata */}
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground/55">
-                        <span className="tabular-nums">
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                        <span className="inline-flex items-center rounded-md border border-white/6 bg-white/3 px-2 py-0.5 tabular-nums text-muted-foreground/60">
                           {new Date(message.createdAt).toLocaleTimeString()}
                         </span>
                         {message.responseMs && (
-                          <span className="flex items-center gap-1 tabular-nums">
+                          <span className="inline-flex items-center gap-1 rounded-md border border-white/6 bg-white/3 px-2 py-0.5 tabular-nums text-muted-foreground/60">
                             <Clock className="h-3 w-3" strokeWidth={1.5} />
-                            {message.responseMs}ms
+                            {formatResponseTimeInSeconds(message.responseMs)}
                           </span>
                         )}
                         {message.llmProfile && (
-                          <Badge className="h-5 border border-white/6 bg-white/3 text-[10px] text-muted-foreground/65">
+                          <Badge className="h-5 border border-primary/25 bg-primary/12 text-[10px] text-primary-foreground">
                             {message.llmProfile}
                           </Badge>
                         )}
@@ -515,9 +520,9 @@ export default function ChatWorkspacePage() {
           {/* Composer */}
           <div className="border-t border-white/6 bg-black p-4">
             {!hasValidScope && (
-              <Alert className="mb-3 border-white/6 bg-white/4">
-                <AlertCircle className="h-4 w-4 text-muted-foreground/45" />
-                <AlertDescription className="text-xs text-muted-foreground/60">
+              <Alert className="mb-3 border-primary/25 bg-primary/10">
+                <AlertCircle className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-xs text-white/80">
                   Select an instance and namespace to start chatting
                 </AlertDescription>
               </Alert>

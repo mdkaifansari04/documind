@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Fragment, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -52,6 +52,227 @@ import {
 import { useAppContext } from '@/lib/context'
 import type { QueryInstanceResponse, FilterClause } from '@/lib/types'
 import { askSchema, type AskBody } from '@/utils/validations'
+
+const inlineMarkdownPattern =
+  /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\))/g
+const blockStartPattern = /^(#{1,3}\s|[-*]\s|\d+\.\s|>\s|```)/
+
+function formatResponseTimeInSeconds(ms: number) {
+  const seconds = ms / 1000
+  return `${seconds.toFixed(seconds >= 10 ? 1 : 2)}s`
+}
+
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const nodes: ReactNode[] = []
+  let lastIndex = 0
+  inlineMarkdownPattern.lastIndex = 0
+
+  for (const match of text.matchAll(inlineMarkdownPattern)) {
+    const [token, , linkText, linkHref] = match
+    const start = match.index ?? 0
+
+    if (start > lastIndex) {
+      nodes.push(
+        <Fragment key={`txt-${start}`}>{text.slice(lastIndex, start)}</Fragment>
+      )
+    }
+
+    if (token.startsWith('`') && token.endsWith('`')) {
+      nodes.push(
+        <code
+          key={`code-${start}`}
+          className="rounded bg-white/8 px-1 py-0.5 font-mono text-[11px] text-white"
+        >
+          {token.slice(1, -1)}
+        </code>
+      )
+    } else if (token.startsWith('**') && token.endsWith('**')) {
+      nodes.push(
+        <strong key={`strong-${start}`} className="font-semibold text-white">
+          {token.slice(2, -2)}
+        </strong>
+      )
+    } else if (token.startsWith('*') && token.endsWith('*')) {
+      nodes.push(
+        <em key={`em-${start}`} className="italic text-white/90">
+          {token.slice(1, -1)}
+        </em>
+      )
+    } else if (token.startsWith('[') && linkText && linkHref) {
+      nodes.push(
+        <a
+          key={`link-${start}`}
+          href={linkHref}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary underline underline-offset-2 hover:text-primary/85"
+        >
+          {linkText}
+        </a>
+      )
+    }
+
+    lastIndex = start + token.length
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(
+      <Fragment key={`txt-tail-${lastIndex}`}>{text.slice(lastIndex)}</Fragment>
+    )
+  }
+
+  return nodes.length > 0 ? nodes : [text]
+}
+
+function renderMarkdownContent(markdown: string): ReactNode[] {
+  const lines = markdown.replace(/\r\n/g, '\n').split('\n')
+  const elements: ReactNode[] = []
+  let i = 0
+  let key = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+
+    if (!line.trim()) {
+      i++
+      continue
+    }
+
+    if (line.startsWith('```')) {
+      const language = line.slice(3).trim()
+      i++
+      const codeLines: string[] = []
+      while (i < lines.length && !lines[i].startsWith('```')) {
+        codeLines.push(lines[i])
+        i++
+      }
+      if (i < lines.length) i++
+
+      elements.push(
+        <pre
+          key={`block-${key++}`}
+          className="overflow-x-auto rounded-lg border border-white/6 bg-black px-3 py-2"
+        >
+          <code className="font-mono text-xs text-white/85">
+            {codeLines.join('\n')}
+          </code>
+          {language && (
+            <span className="mt-2 block text-[10px] uppercase tracking-wide text-muted-foreground/45">
+              {language}
+            </span>
+          )}
+        </pre>
+      )
+      continue
+    }
+
+    if (/^###\s+/.test(line) || /^##\s+/.test(line) || /^#\s+/.test(line)) {
+      const level = line.match(/^#+/)?.[0].length ?? 1
+      const content = line.replace(/^#{1,3}\s+/, '')
+      const headingClass =
+        level === 1
+          ? 'text-base font-semibold text-white'
+          : level === 2
+            ? 'text-sm font-semibold text-white'
+            : 'text-sm font-medium text-white/90'
+
+      elements.push(
+        <p key={`block-${key++}`} className={headingClass}>
+          {renderInlineMarkdown(content)}
+        </p>
+      )
+      i++
+      continue
+    }
+
+    if (/^>\s+/.test(line)) {
+      const quoteLines: string[] = []
+      while (i < lines.length && /^>\s+/.test(lines[i])) {
+        quoteLines.push(lines[i].replace(/^>\s+/, ''))
+        i++
+      }
+      elements.push(
+        <blockquote
+          key={`block-${key++}`}
+          className="border-l-2 border-primary/40 pl-3 text-sm text-white/75"
+        >
+          {quoteLines.map((quoteLine, idx) => (
+            <Fragment key={idx}>
+              {idx > 0 && <br />}
+              {renderInlineMarkdown(quoteLine)}
+            </Fragment>
+          ))}
+        </blockquote>
+      )
+      continue
+    }
+
+    if (/^[-*]\s+/.test(line)) {
+      const items: string[] = []
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-*]\s+/, ''))
+        i++
+      }
+      elements.push(
+        <ul
+          key={`block-${key++}`}
+          className="list-disc space-y-1 pl-5 text-sm text-white/85 marker:text-muted-foreground/60"
+        >
+          {items.map((item, idx) => (
+            <li key={idx}>{renderInlineMarkdown(item)}</li>
+          ))}
+        </ul>
+      )
+      continue
+    }
+
+    if (/^\d+\.\s+/.test(line)) {
+      const items: string[] = []
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s+/, ''))
+        i++
+      }
+      elements.push(
+        <ol
+          key={`block-${key++}`}
+          className="list-decimal space-y-1 pl-5 text-sm text-white/85 marker:text-muted-foreground/60"
+        >
+          {items.map((item, idx) => (
+            <li key={idx}>{renderInlineMarkdown(item)}</li>
+          ))}
+        </ol>
+      )
+      continue
+    }
+
+    const paragraphLines: string[] = [line]
+    i++
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !blockStartPattern.test(lines[i])
+    ) {
+      paragraphLines.push(lines[i])
+      i++
+    }
+
+    elements.push(
+      <p
+        key={`block-${key++}`}
+        className="text-sm leading-relaxed break-words text-white/85"
+      >
+        {paragraphLines.map((paragraphLine, idx) => (
+          <Fragment key={idx}>
+            {idx > 0 && <br />}
+            {renderInlineMarkdown(paragraphLine)}
+          </Fragment>
+        ))}
+      </p>
+    )
+  }
+
+  return elements
+}
 
 export default function AskPage() {
   const {
@@ -463,7 +684,7 @@ export default function AskPage() {
                     <div className="flex items-center gap-3 text-xs text-muted-foreground/50">
                       <span className="flex items-center gap-1 tabular-nums">
                         <Clock className="h-3 w-3" strokeWidth={1.5} />
-                        {response.response_ms}ms
+                        {formatResponseTimeInSeconds(response.response_ms)}
                       </span>
                       <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
                         {response.llm_profile}
@@ -491,9 +712,9 @@ export default function AskPage() {
                         </AlertDescription>
                       </Alert>
                     )}
-                    <p className="text-sm leading-relaxed text-white/85">
-                      {response.answer}
-                    </p>
+                    <div className="space-y-3">
+                      {renderMarkdownContent(response.answer)}
+                    </div>
                   </>
                 ) : null}
               </CardContent>
@@ -520,15 +741,15 @@ export default function AskPage() {
               </div>
             ) : response?.sources && response.sources.length > 0 ? (
               <ScrollArea className="h-[500px] pr-4">
-                <div className="space-y-3">
+                <div className="space-y-3 pr-1">
                   {response.sources.map((source, index) => (
                     <div
                       key={source.id}
-                      className="rounded-lg border border-white/6 bg-[#141414] p-3 transition-colors duration-150 hover:bg-white/4"
+                      className="overflow-hidden rounded-lg border border-white/6 bg-[#141414] p-3 transition-colors duration-150 hover:bg-white/4"
                       style={{ animationDelay: `${index * 0.04}s` }}
                     >
                       <div className="mb-2 flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
                           <FileText
                             className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35"
                             strokeWidth={1.5}
@@ -550,7 +771,7 @@ export default function AskPage() {
                         </Badge>
                       </div>
                       <p
-                        className={`text-xs text-muted-foreground/45 ${
+                        className={`text-xs break-all whitespace-pre-wrap text-muted-foreground/45 ${
                           expandedSources.has(source.id) ? '' : 'line-clamp-3'
                         }`}
                       >
