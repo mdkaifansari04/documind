@@ -1,6 +1,5 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
 import {
   Database,
   HardDrive,
@@ -21,7 +20,7 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { PageHeader } from '@/components/page-header'
-import api from '@/lib/api'
+import { useCollections, useHealth } from '@/hooks/queries'
 import { formatDateTime } from '@/lib/format'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -32,20 +31,13 @@ export default function SystemPage() {
     data: health,
     isLoading: loadingHealth,
     refetch: refetchHealth,
-  } = useQuery({
-    queryKey: ['health'],
-    queryFn: () => api.getHealth(),
-    refetchInterval: 30000, // Refresh every 30 seconds
-  })
+  } = useHealth()
 
   const {
     data: collections,
     isLoading: loadingCollections,
     refetch: refetchCollections,
-  } = useQuery({
-    queryKey: ['collections'],
-    queryFn: () => api.getCollections(),
-  })
+  } = useCollections()
 
   const handleRefresh = () => {
     refetchHealth()

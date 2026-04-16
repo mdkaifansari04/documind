@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -33,20 +31,11 @@ import {
   FieldLabel,
   FieldError,
 } from "@/components/ui/field";
+import { useIngestResource, useUploadResource } from "@/hooks/mutations";
+import { useResources } from "@/hooks/queries";
 import { useAppContext } from "@/lib/context";
-import api from "@/lib/api";
 import { formatDistanceToNow } from "@/lib/format";
-import type { ApiError } from "@/lib/types";
-
-const ingestSchema = z.object({
-  source_type: z.enum(["text", "markdown", "pdf", "html", "docx"]),
-  content: z.string().min(1, "Content is required"),
-  source_ref: z.string().min(1, "Source reference is required"),
-  user_id: z.string().optional(),
-  session_id: z.string().optional(),
-});
-
-type IngestForm = z.infer<typeof ingestSchema>;
+import { ingestResourceSchema, type IngestResourceBody } from "@/utils/validations";
 
 const STATUS_STYLES: Record<
   string,
@@ -70,7 +59,6 @@ const STATUS_STYLES: Record<
 };
 
 export default function ResourcesPage() {
-  const queryClient = useQueryClient();
   const {
     activeInstanceId,
     activeNamespaceId,
@@ -82,8 +70,11 @@ export default function ResourcesPage() {
   const [uploadSourceType, setUploadSourceType] = useState<string>("pdf");
   const [uploadSourceRef, setUploadSourceRef] = useState("");
 
-  const form = useForm<IngestForm>({
-    resolver: zodResolver(ingestSchema),
+  const ingestMutation = useIngestResource();
+  const uploadMutation = useUploadResource();
+
+  const form = useForm<IngestResourceBody>({
+    resolver: zodResolver(ingestResourceSchema),
     defaultValues: {
       source_type: "text",
       content: "",
@@ -93,67 +84,35 @@ export default function ResourcesPage() {
     },
   });
 
-  const { data: resources, isLoading: loadingResources } = useQuery({
-    queryKey: ["resources", activeInstanceId, activeNamespaceId],
-    queryFn: () =>
-      api.getResources({
+  const { data: resources, isLoading: loadingResources } = useResources(
+    {
+      instance_id: activeInstanceId || undefined,
+      namespace_id: activeNamespaceId || undefined,
+    },
+    hasContext
+  );
+
+  const onSubmit = (data: IngestResourceBody) => {
+    ingestMutation.mutate(
+      {
+        ...data,
         instance_id: activeInstanceId || undefined,
         namespace_id: activeNamespaceId || undefined,
-      }),
-    enabled: hasContext,
-  });
-
-  const ingestMutation = useMutation({
-    mutationFn: (data: IngestForm) =>
-      api.ingestResource({
-        ...data,
-        instance_id: activeInstanceId!,
-        namespace_id: activeNamespaceId!,
-      }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["resources"] });
-      toast.success("Resource ingested", {
-        description: `Indexed ${data.chunks_indexed} chunks successfully.`,
-      });
-      form.reset();
-    },
-    onError: (error: ApiError) => {
-      toast.error("Failed to ingest resource", {
-        description: error.message,
-      });
-    },
-  });
-
-  const uploadMutation = useMutation({
-    mutationFn: async () => {
-      if (!uploadFile || !activeInstanceId || !activeNamespaceId) return;
-      const formData = new FormData();
-      formData.append("file", uploadFile);
-      formData.append("instance_id", activeInstanceId);
-      formData.append("namespace_id", activeNamespaceId);
-      formData.append("source_type", uploadSourceType);
-      formData.append("source_ref", uploadSourceRef || uploadFile.name);
-      return api.uploadResource(formData);
-    },
-    onSuccess: (data) => {
-      if (data) {
-        queryClient.invalidateQueries({ queryKey: ["resources"] });
-        toast.success("File uploaded", {
-          description: `Indexed ${data.chunks_indexed} chunks successfully.`,
-        });
-        setUploadFile(null);
-        setUploadSourceRef("");
+      },
+      {
+        onSuccess: (result) => {
+          toast.success("Resource ingested", {
+            description: `Indexed ${result.chunks_indexed} chunks successfully.`,
+          });
+          form.reset();
+        },
+        onError: (error: Error) => {
+          toast.error("Failed to ingest resource", {
+            description: error.message,
+          });
+        },
       }
-    },
-    onError: (error: ApiError) => {
-      toast.error("Failed to upload file", {
-        description: error.message,
-      });
-    },
-  });
-
-  const onSubmit = (data: IngestForm) => {
-    ingestMutation.mutate(data);
+    );
   };
 
   if (!hasContext) {
@@ -435,7 +394,32 @@ export default function ResourcesPage() {
                   size="sm"
                   className="h-8 rounded-lg text-xs"
                   disabled={!uploadFile || uploadMutation.isPending}
-                  onClick={() => uploadMutation.mutate()}
+                  onClick={() => {
+                    if (!uploadFile || !activeInstanceId || !activeNamespaceId) {
+                      return;
+                    }
+                    const formData = new FormData();
+                    formData.append("file", uploadFile);
+                    formData.append("instance_id", activeInstanceId);
+                    formData.append("namespace_id", activeNamespaceId);
+                    formData.append("source_type", uploadSourceType);
+                    formData.append("source_ref", uploadSourceRef || uploadFile.name);
+
+                    uploadMutation.mutate(formData, {
+                      onSuccess: (result) => {
+                        toast.success("File uploaded", {
+                          description: `Indexed ${result.chunks_indexed} chunks successfully.`,
+                        });
+                        setUploadFile(null);
+                        setUploadSourceRef("");
+                      },
+                      onError: (error: Error) => {
+                        toast.error("Failed to upload file", {
+                          description: error.message,
+                        });
+                      },
+                    });
+                  }}
                 >
                   {uploadMutation.isPending && (
                     <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />

@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   Search,
   Loader2,
@@ -36,16 +34,13 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { FieldGroup, Field, FieldLabel, FieldError } from '@/components/ui/field'
 import { PageHeader } from '@/components/page-header'
+import {
+  useSearchAdvancedMutation,
+  useSearchInstanceMutation,
+} from '@/hooks/mutations'
 import { useAppContext } from '@/lib/context'
-import api from '@/lib/api'
-import type { SearchResult, ApiError, FilterClause } from '@/lib/types'
-
-const searchSchema = z.object({
-  query: z.string().min(1, 'Query is required'),
-  top_k: z.number().min(1).max(50).default(5),
-})
-
-type SearchForm = z.infer<typeof searchSchema>
+import type { SearchResult, FilterClause } from '@/lib/types'
+import { searchSchema, type SearchBody } from '@/utils/validations'
 
 export default function SearchPage() {
   const {
@@ -67,8 +62,12 @@ export default function SearchPage() {
   const [denseWeight, setDenseWeight] = useState(0.7)
   const [keywordWeight, setKeywordWeight] = useState(0.3)
   const [filters, setFilters] = useState<FilterClause[]>([])
+  const searchInstanceMutation = useSearchInstanceMutation()
+  const searchAdvancedMutation = useSearchAdvancedMutation()
+  const isSearching =
+    searchInstanceMutation.isPending || searchAdvancedMutation.isPending
 
-  const form = useForm<SearchForm>({
+  const form = useForm<SearchBody>({
     resolver: zodResolver(searchSchema),
     defaultValues: {
       query: '',
@@ -76,14 +75,32 @@ export default function SearchPage() {
     },
   })
 
-  const searchMutation = useMutation({
-    mutationFn: async (data: SearchForm) => {
-      if (!activeInstanceId || !activeNamespaceId) {
-        throw new Error('Context not set')
-      }
+  const onSubmit = (data: SearchBody) => {
+    if (!activeInstanceId || !activeNamespaceId) {
+      toast.error('Search failed', {
+        description: 'Context not set',
+      })
+      return
+    }
 
-      if (advancedOpen) {
-        return api.searchAdvanced({
+    const onSuccess = (response: { results: SearchResult[] }) => {
+      setResults(response.results)
+      if (response.results.length === 0) {
+        toast.info('No results found', {
+          description: 'Try adjusting your query or filters.',
+        })
+      }
+    }
+
+    const onError = (error: Error) => {
+      toast.error('Search failed', {
+        description: error.message,
+      })
+    }
+
+    if (advancedOpen) {
+      searchAdvancedMutation.mutate(
+        {
           instance_id: activeInstanceId,
           namespace_id: activeNamespaceId,
           query: data.query,
@@ -98,33 +115,21 @@ export default function SearchPage() {
                 }
               : undefined,
           filters: filters.length > 0 ? { must: filters } : undefined,
-        })
-      }
+        },
+        { onSuccess, onError }
+      )
+      return
+    }
 
-      return api.searchInstance({
+    searchInstanceMutation.mutate(
+      {
         instance_id: activeInstanceId,
         namespace_id: activeNamespaceId,
         query: data.query,
         top_k: data.top_k,
-      })
-    },
-    onSuccess: (data) => {
-      setResults(data.results)
-      if (data.results.length === 0) {
-        toast.info('No results found', {
-          description: 'Try adjusting your query or filters.',
-        })
-      }
-    },
-    onError: (error: ApiError) => {
-      toast.error('Search failed', {
-        description: error.message,
-      })
-    },
-  })
-
-  const onSubmit = (data: SearchForm) => {
-    searchMutation.mutate(data)
+      },
+      { onSuccess, onError }
+    )
   }
 
   const toggleResultExpand = (id: string | number) => {
@@ -223,9 +228,9 @@ export default function SearchPage() {
                       type="submit"
                       size="sm"
                       className="h-8 rounded-lg text-xs"
-                      disabled={searchMutation.isPending}
+                      disabled={isSearching}
                     >
-                      {searchMutation.isPending && (
+                      {isSearching && (
                         <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                       )}
                       Search
@@ -439,7 +444,7 @@ export default function SearchPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {searchMutation.isPending ? (
+            {isSearching ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-24 w-full rounded-lg bg-white/3" />
