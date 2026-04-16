@@ -485,6 +485,19 @@ class ResourceRouter:
         return normalized
 
     @staticmethod
+    def _resolve_seed_urls(primary_url: str, extra_seed_urls: list[str]) -> list[str]:
+        ordered_urls: list[str] = [primary_url, *(extra_seed_urls or [])]
+        normalized_urls: list[str] = []
+        seen: set[str] = set()
+        for candidate in ordered_urls:
+            normalized = DocumentationCrawler.normalize_url(candidate)
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            normalized_urls.append(normalized)
+        return normalized_urls
+
+    @staticmethod
     def _score_link(
         *,
         url: str,
@@ -636,6 +649,50 @@ class ResourceRouter:
         except ValueError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    async def _discover_links_for_seeds(
+        self,
+        *,
+        url: str,
+        seed_urls: list[str],
+        crawl_subpages: bool,
+        max_pages: int,
+        scope_mode: str,
+        scope_path: str | None,
+    ) -> tuple[list[str], str, str, str, list[str]]:
+        merged_seed_urls = self._resolve_seed_urls(url, seed_urls)
+        if not merged_seed_urls:
+            raise HTTPException(status_code=400, detail="No valid seed URLs provided")
+
+        all_links: list[str] = []
+        response_root_url = merged_seed_urls[0]
+        response_scope_mode = scope_mode
+        response_scope_path = scope_path or "/"
+
+        for index, seed_url in enumerate(merged_seed_urls):
+            links, normalized_root, resolved_scope_mode, resolved_scope_path = (
+                await self._discover_links(
+                    url=seed_url,
+                    crawl_subpages=crawl_subpages,
+                    max_pages=max_pages,
+                    scope_mode=scope_mode,
+                    scope_path=scope_path,
+                )
+            )
+            if index == 0:
+                response_root_url = normalized_root
+                response_scope_mode = resolved_scope_mode
+                response_scope_path = resolved_scope_path
+            all_links.extend(links)
+
+        deduped_links = self._normalize_and_limit_urls(all_links, max_pages=max_pages)
+        return (
+            deduped_links,
+            response_root_url,
+            response_scope_mode,
+            response_scope_path,
+            merged_seed_urls,
+        )
+
     async def ingest_resource(
         self,
         request: Request,
@@ -745,12 +802,15 @@ class ResourceRouter:
             auto_create=False,
         )
 
-        links, normalized_root, resolved_scope_mode, resolved_scope_path = await self._discover_links(
+        links, normalized_root, resolved_scope_mode, resolved_scope_path, merged_seed_urls = (
+            await self._discover_links_for_seeds(
             url=body.url,
+            seed_urls=body.seed_urls,
             crawl_subpages=body.crawl_subpages,
             max_pages=body.max_pages,
             scope_mode=body.scope_mode,
             scope_path=body.scope_path,
+            )
         )
 
         link_items = self._build_link_items(
@@ -770,6 +830,7 @@ class ResourceRouter:
             "crawl_subpages": body.crawl_subpages,
             "scope_mode": resolved_scope_mode,
             "scope_path": resolved_scope_path,
+            "seed_urls": merged_seed_urls,
             "count": len(ordered_links),
             "links": ordered_links,
             "link_items": link_items,
@@ -787,8 +848,9 @@ class ResourceRouter:
 
         discovered_links = body.urls
         if not discovered_links:
-            discovered_links, _, _, _ = await self._discover_links(
+            discovered_links, _, _, _, _ = await self._discover_links_for_seeds(
                 url=body.url,
+                seed_urls=body.seed_urls,
                 crawl_subpages=body.crawl_subpages,
                 max_pages=body.max_pages,
                 scope_mode=body.scope_mode,
@@ -813,9 +875,29 @@ class ResourceRouter:
         results: list[dict] = []
         success_count = 0
         failed_count = 0
+        skipped_count = 0
         total_chunks = 0
+        existing_source_refs: set[str] = set()
+        if body.skip_existing:
+            existing_resources = container.store.list_resources(resolved_kb_id)
+            existing_source_refs = {
+                str(resource.get("source_ref", ""))
+                for resource in existing_resources
+                if str(resource.get("source_ref", "")).strip()
+            }
 
         for link in normalized_links:
+            if body.skip_existing and link in existing_source_refs:
+                skipped_count += 1
+                results.append(
+                    {
+                        "url": link,
+                        "status": "skipped",
+                        "reason": "already_ingested",
+                    }
+                )
+                continue
+
             resource = container.store.create_resource(
                 knowledge_base_id=resolved_kb_id,
                 source_type="url",
@@ -870,13 +952,14 @@ class ResourceRouter:
                 failed_count += 1
 
         return {
-            "status": "success" if success_count > 0 else "error",
+            "status": "success" if success_count > 0 or skipped_count > 0 else "error",
             "kb_id": resolved_kb_id,
             "instance_id": kb["instance_id"],
             "namespace_id": kb["namespace_id"],
             "total_links": len(normalized_links),
             "success_count": success_count,
             "failed_count": failed_count,
+            "skipped_count": skipped_count,
             "total_chunks_indexed": total_chunks,
             "results": results,
         }

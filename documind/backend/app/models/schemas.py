@@ -184,6 +184,7 @@ class ResourceCrawlRequest(BaseModel):
     max_pages: int = Field(default=20, ge=1, le=100)
     scope_mode: str = "strict_docs"
     scope_path: str | None = None
+    seed_urls: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_target(self) -> "ResourceCrawlRequest":
@@ -196,6 +197,7 @@ class ResourceCrawlRequest(BaseModel):
 
 class ResourceCrawlIngestRequest(ResourceCrawlRequest):
     urls: list[str] = Field(default_factory=list)
+    skip_existing: bool = False
 
 
 class MemoryIngestRequest(BaseModel):

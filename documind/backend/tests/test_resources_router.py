@@ -274,7 +274,7 @@ class ResourceRouterTests(unittest.TestCase):
         self.assertEqual(
             body["links"],
             [
-                "https://docs.example.com",
+                "https://docs.example.com/",
                 "https://docs.example.com/getting-started",
             ],
         )
@@ -381,6 +381,55 @@ class ResourceRouterTests(unittest.TestCase):
         self.assertIsInstance(first["reasons"], list)
         self.assertGreaterEqual(first["score"], body["link_items"][-1]["score"])
 
+    def test_crawl_preview_merges_and_dedupes_seed_urls(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-1",
+            "instance_id": "inst-1",
+            "namespace_id": "company_docs",
+        }
+        fake_container = SimpleNamespace(store=fake_store, ingestion=MagicMock())
+        client = self._build_client(fake_container)
+
+        with patch(
+            "app.routers.resources.DocumentationCrawler.discover",
+            side_effect=[
+                [
+                    "https://docs.example.com/start",
+                    "https://docs.example.com/a",
+                ],
+                [
+                    "https://docs.example.com/start",
+                    "https://docs.example.com/b",
+                ],
+            ],
+        ):
+            response = client.post(
+                "/resources/crawl/preview",
+                json={
+                    "instance_id": "inst-1",
+                    "namespace_id": "company_docs",
+                    "url": "https://docs.example.com/start",
+                    "seed_urls": [
+                        "https://docs.example.com/start",
+                        "https://docs.example.com/extra",
+                    ],
+                    "crawl_subpages": True,
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["count"], 3)
+        self.assertEqual(
+            set(body["links"]),
+            {
+                "https://docs.example.com/start",
+                "https://docs.example.com/a",
+                "https://docs.example.com/b",
+            },
+        )
+
     def test_crawl_ingest_processes_urls(self) -> None:
         fake_store = MagicMock()
         fake_store.get_knowledge_base.return_value = {
@@ -420,6 +469,50 @@ class ResourceRouterTests(unittest.TestCase):
         self.assertEqual(body["failed_count"], 0)
         self.assertEqual(body["total_chunks_indexed"], 5)
         self.assertEqual(len(body["results"]), 2)
+
+    def test_crawl_ingest_skips_existing_urls(self) -> None:
+        fake_store = MagicMock()
+        fake_store.get_knowledge_base.return_value = {
+            "id": "kb-1",
+            "instance_id": "inst-1",
+            "namespace_id": "company_docs",
+            "embedding_model": "minilm",
+            "embedding_dim": 384,
+            "collection_name": "kb_collection",
+        }
+        fake_store.list_resources.return_value = [
+            {
+                "id": "old-1",
+                "source_ref": "https://docs.example.com/a",
+                "status": "done",
+            }
+        ]
+        fake_store.create_resource.return_value = {"id": "res-2"}
+        fake_ingestion = MagicMock()
+        fake_ingestion.ingest.return_value = 3
+
+        fake_container = SimpleNamespace(store=fake_store, ingestion=fake_ingestion)
+        client = self._build_client(fake_container)
+
+        response = client.post(
+            "/resources/crawl/ingest",
+            json={
+                "kb_id": "kb-1",
+                "url": "https://docs.example.com/start",
+                "crawl_subpages": True,
+                "skip_existing": True,
+                "urls": [
+                    "https://docs.example.com/a",
+                    "https://docs.example.com/b",
+                ],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["success_count"], 1)
+        self.assertEqual(body["skipped_count"], 1)
+        self.assertEqual(fake_ingestion.ingest.call_count, 1)
 
 
 if __name__ == "__main__":
