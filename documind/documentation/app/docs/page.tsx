@@ -104,6 +104,25 @@ export default function OverviewPage() {
         </div>
       </section>
 
+      <section className="mb-8 sm:mb-12">
+        <h2 className="text-sm font-medium text-foreground mb-3 sm:mb-4">
+          Source Repository
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+          <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+            Official GitHub repo:{' '}
+            <a
+              href="https://github.com/mdkaifansari04/documind"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline underline-offset-4 hover:opacity-90"
+            >
+              https://github.com/mdkaifansari04/documind
+            </a>
+          </p>
+        </div>
+      </section>
+
       <section className="pt-6 sm:pt-8 border-t border-border">
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3 sm:mb-4">
           Next Steps

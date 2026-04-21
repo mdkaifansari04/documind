@@ -1,5 +1,5 @@
 import { DocsLayout } from '@/components/docs/docs-layout';
-import { StepCommandBlock } from '@/components/docs/command-block';
+import { CommandBlock, StepCommandBlock } from '@/components/docs/command-block';
 import { Info } from 'lucide-react';
 import Link from 'next/link';
 
@@ -8,14 +8,41 @@ export default function GettingStartedPage() {
     <DocsLayout
       pageId="getting-started"
       title="Getting Started"
-      description="Spin up DocuMind locally, index a document, and run your first real query in a few commands."
+      description="Clone the repo, run backend + frontend dashboard, and bootstrap DCLI with reproducible paths."
       breadcrumbs={[{ label: 'Docs', href: '/docs' }, { label: 'Getting Started' }]}
     >
-      <section id="prerequisites" className="mb-12">
-        <h2 className="text-xl font-semibold text-foreground mb-4">Before You Hit Enter</h2>
+      <section id="repo-setup" className="mb-12">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Clone Repo & Project Map</h2>
         <p className="text-muted-foreground leading-relaxed mb-4">
-          Keep this practical: you do not need a giant DevOps ceremony, but you do need a few basics.
+          Start from the official source so every path in this page makes sense.
         </p>
+        <StepCommandBlock
+          step={1}
+          title="Clone DocuMind"
+          command="git clone https://github.com/mdkaifansari04/documind.git"
+          description="Official repository for backend API, frontend dashboard, CLI, MCP server, and documentation."
+        />
+        <div className="mt-6">
+          <StepCommandBlock
+            step={2}
+            title="Enter repository root"
+            command="cd documind"
+            description="All next commands on this page assume you are in this repo root."
+          />
+        </div>
+        <div className="mt-6 rounded-xl border border-border bg-card p-4">
+          <p className="text-sm font-medium text-foreground mb-2">Repo layout you will use</p>
+          <pre className="rounded-lg border border-border bg-code-bg p-3 text-xs text-code-text overflow-x-auto">
+{`documind/
+  backend/        # FastAPI, ingestion, retrieval, observability, DCLI, MCP
+  frontend/       # Next.js dashboard to manage instances/KB/resources/query
+  documentation/  # This docs site`}
+          </pre>
+        </div>
+      </section>
+
+      <section id="prerequisites" className="mb-12">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Prerequisites</h2>
         <ul className="space-y-2 text-muted-foreground">
           <li className="flex items-start gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
@@ -23,45 +50,49 @@ export default function GettingStartedPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-            <span>Local Actian Vector setup from this repo</span>
+            <span>Bun (for frontend dashboard)</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-            <span>A terminal and mild tolerance for setup logs</span>
+            <span>pipx (recommended for global DCLI install)</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+            <span>Local Actian Vector setup used by backend</span>
           </li>
         </ul>
       </section>
 
       <section id="backend-quickstart" className="mb-12">
-        <h2 className="text-xl font-semibold text-foreground mb-6">Backend Quick Start</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-6">Backend Quick Start (FastAPI)</h2>
 
         <div className="space-y-8">
           <StepCommandBlock
-            step={1}
-            title="Jump into the backend"
-            command="cd documind/backend"
-            description="This is where FastAPI, ingestion, retrieval, and service wiring live."
-          />
-
-          <StepCommandBlock
-            step={2}
-            title="Create and activate virtual environment"
-            command="python -m venv .venv && source .venv/bin/activate"
-            description="Clean env, fewer mysterious package arguments later."
-          />
-
-          <StepCommandBlock
             step={3}
-            title="Install dependencies"
-            command="pip install -r requirements.txt"
-            description="Includes FastAPI, parsing libs, and dependencies needed for ingestion/retrieval flow."
+            title="Go to backend"
+            command="cd backend"
+            description="Backend service code and runtime wiring live here."
           />
 
           <StepCommandBlock
             step={4}
-            title="Run API server"
+            title="Create and activate venv"
+            command="python -m venv .venv && source .venv/bin/activate"
+            description="Keeps backend dependencies isolated."
+          />
+
+          <StepCommandBlock
+            step={5}
+            title="Install pip packages"
+            command="pip install -r requirements.txt"
+            description="Installs API, ingestion, retrieval, and supporting dependencies."
+          />
+
+          <StepCommandBlock
+            step={6}
+            title="Run backend server"
             command="uvicorn app.main:app --reload --port 8000"
-            description="DocuMind API starts on http://localhost:8000."
+            description="Backend starts at http://localhost:8000."
           />
         </div>
 
@@ -69,12 +100,49 @@ export default function GettingStartedPage() {
           <div className="flex items-start gap-3">
             <Info className="w-5 h-5 text-poof-peach flex-shrink-0 mt-0.5" />
             <div>
-              <h4 className="font-medium text-poof-peach mb-1">Reality Check</h4>
+              <h4 className="font-medium text-poof-peach mb-1">Quick check</h4>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                If `/health` is up but retrieval is empty, your API is alive but your namespace likely has no data yet. Classic first-run confusion, we all do it.
+                Open <code className="font-mono text-code-text bg-code-bg px-1 rounded text-xs">http://localhost:8000/health</code>. If it returns OK, backend is up.
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section id="frontend-quickstart" className="mb-12">
+        <h2 className="text-xl font-semibold text-foreground mb-6">Frontend Quick Start (Dashboard)</h2>
+        <p className="text-muted-foreground leading-relaxed mb-4">
+          The dashboard is your control center: create instances, manage knowledge bases, ingest resources, and run search/ask flows.
+        </p>
+
+        <div className="space-y-8">
+          <StepCommandBlock
+            step={7}
+            title="Open frontend directory"
+            command="cd ../frontend"
+            description="Run this from backend directory. If you are at repo root, use `cd frontend`."
+          />
+
+          <StepCommandBlock
+            step={8}
+            title="Install dependencies with Bun"
+            command="bun install"
+            description="Installs Next.js dashboard dependencies."
+          />
+
+          <StepCommandBlock
+            step={9}
+            title="Set API URL for frontend"
+            command={"echo 'NEXT_PUBLIC_API_URL=http://localhost:8000' > .env"}
+            description="Frontend uses this to call the local backend."
+          />
+
+          <StepCommandBlock
+            step={10}
+            title="Run frontend"
+            command="bun run dev"
+            description="Dashboard starts at http://localhost:3000."
+          />
         </div>
       </section>
 
@@ -83,39 +151,59 @@ export default function GettingStartedPage() {
 
         <div className="space-y-8">
           <StepCommandBlock
-            step={1}
-            title="Install DCLI globally (recommended)"
-            command="pipx install /Users/mdkaifansari04/code/projects/vector-ai/documind/backend"
-            description="This gives you `dcli` and `DCLI` command aliases."
+            step={11}
+            title="Install DCLI from repo backend package"
+            command="pipx install ./backend"
+            description="Run this from repo root. Installs `dcli`, `documind`, and `DCLI` commands."
           />
 
           <StepCommandBlock
-            step={2}
-            title="Point CLI to your API"
+            step={12}
+            title="Point DCLI to local backend"
             command='export DOCUMIND_API_URL="http://localhost:8000"'
-            description="So DCLI knows where to send requests."
+            description="DCLI needs backend URL for all operations."
           />
 
           <StepCommandBlock
-            step={3}
-            title="Initialize context"
+            step={13}
+            title="Initialize namespace context"
             command="dcli init --namespace-id company_docs"
-            description="Sets active context so you do not type instance and namespace every single time."
+            description="Sets active context so instance/namespace are remembered."
           />
 
           <StepCommandBlock
-            step={4}
-            title="Check context + run first query"
+            step={14}
+            title="Run a retrieval check"
             command='dcli context-show && dcli search-docs --qr "deploy command" --top-k 5'
-            description="If this works, your retrieval path is alive."
+            description="If this returns results, CLI and retrieval path are good."
+          />
+        </div>
+      </section>
+
+      <section id="run-order" className="mb-12">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Run Order & Sanity Checks</h2>
+        <div className="space-y-4">
+          <div className="rounded-xl border border-border bg-card p-4">
+            <p className="text-sm font-medium text-foreground mb-2">Recommended order</p>
+            <ol className="list-decimal pl-5 space-y-1 text-sm text-muted-foreground">
+              <li>Start backend server first.</li>
+              <li>Start frontend dashboard second.</li>
+              <li>Run DCLI init/search checks third.</li>
+            </ol>
+          </div>
+
+          <CommandBlock
+            title="Health checks"
+            command={`curl -s http://localhost:8000/health
+open http://localhost:3000`}
           />
         </div>
       </section>
 
       <section id="next-steps" className="mt-12 pt-8 border-t border-border">
-        <h2 className="text-xl font-semibold text-foreground mb-4">What To Open Next</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-4">Next Steps</h2>
         <p className="text-muted-foreground leading-relaxed mb-6">
-          You are running now. Next move is understanding architecture and tool interfaces so debugging does not become interpretive art.
+          Once backend + dashboard + CLI are running, move to architecture and component docs for deeper system understanding.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <Link
@@ -126,19 +214,19 @@ export default function GettingStartedPage() {
               <span className="font-medium text-foreground group-hover:text-primary transition-colors">
                 Architecture
               </span>
-              <p className="text-xs text-muted-foreground">How data actually moves through the system</p>
+              <p className="text-xs text-muted-foreground">How data moves end-to-end</p>
             </div>
           </Link>
 
           <Link
-            href="/docs/dcli"
+            href="/docs/components"
             className="flex items-center gap-3 p-4 rounded-lg bg-card border border-border hover:border-primary/50 transition-colors group"
           >
             <div>
               <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                DCLI Reference
+                Components
               </span>
-              <p className="text-xs text-muted-foreground">Every command and what it does</p>
+              <p className="text-xs text-muted-foreground">Backend services + dashboard modules</p>
             </div>
           </Link>
         </div>

@@ -21,8 +21,10 @@ export default function DCLIPage() {
           <StepCommandBlock
             step={1}
             title="Global install with pipx (recommended)"
-            command="pipx install ./documind/backend"
-            description="Installs `dcli` globally while keeping dependencies isolated."
+            command={`git clone https://github.com/mdkaifansari04/documind.git
+cd documind
+pipx install ./backend`}
+            description="Clone repo, enter root, then install DCLI from backend package."
           />
 
           <StepCommandBlock

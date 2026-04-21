@@ -1,5 +1,6 @@
 import { DocsLayout } from '@/components/docs/docs-layout';
 import { pipelineSteps } from '@/lib/docs-data';
+import Image from 'next/image';
 
 const colorClasses: Record<string, string> = {
   violet: 'bg-poof-violet/10 border-poof-violet/30 text-poof-violet',
@@ -80,13 +81,28 @@ export default function ArchitecturePage() {
 
       <section id="diagram" className="mb-12">
         <h2 className="text-xl font-semibold text-foreground mb-4">Architecture Diagram</h2>
-        <div className="border-2 border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center bg-card/50">
-          <div className="text-muted-foreground text-center">
-            <p className="text-sm font-medium mb-2">Diagram slot ready</p>
-            <p className="text-xs mb-3">Drop your final architecture image here and we render it in docs.</p>
-            <code className="text-xs font-mono text-muted-foreground bg-code-bg px-2 py-1 rounded">
-              /public/architecture-diagram.png
-            </code>
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <Image
+            src="/images/arch-light.png"
+            alt="DocuMind architecture diagram (light theme)"
+            width={1800}
+            height={1000}
+            className="block w-full h-auto dark:hidden"
+            priority
+          />
+          <Image
+            src="/images/arch-dark.png"
+            alt="DocuMind architecture diagram (dark theme)"
+            width={1800}
+            height={1000}
+            className="hidden w-full h-auto dark:block"
+            priority
+          />
+          <div className="border-t border-border px-4 py-3">
+            <p className="text-xs text-muted-foreground">
+              Auto-switches between <code className="font-mono bg-code-bg px-1 py-0.5 rounded">arch-light.png</code> and{' '}
+              <code className="font-mono bg-code-bg px-1 py-0.5 rounded">arch-dark.png</code> based on theme.
+            </p>
           </div>
         </div>
       </section>

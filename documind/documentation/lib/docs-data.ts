@@ -64,9 +64,12 @@ export const tocItemsMap: Record<string, TocItem[]> = {
     { id: 'technical-stack', title: 'Technical Stack', level: 1 },
   ],
   'getting-started': [
+    { id: 'repo-setup', title: 'Clone & Repo Map', level: 1 },
     { id: 'prerequisites', title: 'Prerequisites', level: 1 },
     { id: 'backend-quickstart', title: 'Backend Quick Start', level: 1 },
+    { id: 'frontend-quickstart', title: 'Frontend Quick Start', level: 1 },
     { id: 'dcli-quickstart', title: 'DCLI Quick Start', level: 1 },
+    { id: 'run-order', title: 'Run Order & Checks', level: 1 },
     { id: 'next-steps', title: 'Next Steps', level: 1 },
   ],
   'architecture': [
@@ -109,32 +112,32 @@ export const components: ComponentInfo[] = [
   {
     name: 'DocuMind API',
     description: 'FastAPI app that exposes instances, knowledge bases, resources, query, memory, and observability endpoints.',
-    fileRef: 'documind/backend/app/main.py',
+    fileRef: 'backend/app/main.py',
   },
   {
     name: 'Runtime Container',
     description: 'Dependency wiring for vector DB client, control-plane store, routing, ingestion, retrieval, agent, and observability services.',
-    fileRef: 'documind/backend/app/runtime.py',
+    fileRef: 'backend/app/runtime.py',
   },
   {
     name: 'Retrieval Layer',
     description: 'Semantic retrieval plus hybrid fusion (`rrf`/`dbsf`) with metadata filters for grounded lookup.',
-    fileRef: 'documind/backend/app/services/retrieval.py',
+    fileRef: 'backend/app/services/retrieval.py',
   },
   {
     name: 'Observability Layer',
     description: 'Per-query quality summary and alert endpoints so we can catch retrieval drift and hallucination spikes early.',
-    fileRef: 'documind/backend/app/services/observability.py',
+    fileRef: 'backend/app/services/observability.py',
   },
   {
     name: 'DCLI Interface',
     description: 'CLI-first interface for context-aware workflows (`instance_id + namespace_id`) with human and JSON bot output modes.',
-    fileRef: 'documind/backend/documind_cli.py',
+    fileRef: 'backend/documind_cli.py',
   },
   {
     name: 'MCP Server',
     description: 'FastMCP tool surface that lets assistants search, ask, ingest, and manage context with safety guardrails.',
-    fileRef: 'documind/backend/mcp_server/server.py',
+    fileRef: 'backend/mcp_server/server.py',
   },
 ];
 
