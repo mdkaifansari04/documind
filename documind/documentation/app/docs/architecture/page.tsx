@@ -83,7 +83,7 @@ export default function ArchitecturePage() {
         <h2 className="text-xl font-semibold text-foreground mb-4">Architecture Diagram</h2>
         <div className="rounded-xl border border-border bg-card overflow-hidden">
           <Image
-            src="/images/arch-light.png"
+            src="/images/arch-light.svg"
             alt="DocuMind architecture diagram (light theme)"
             width={1800}
             height={1000}
@@ -91,7 +91,7 @@ export default function ArchitecturePage() {
             priority
           />
           <Image
-            src="/images/arch-dark.png"
+            src="/images/arch-dark.svg"
             alt="DocuMind architecture diagram (dark theme)"
             width={1800}
             height={1000}
