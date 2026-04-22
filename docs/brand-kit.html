@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DocuMind Brand Kit</title>
+    <style>
+      /* Typeface from repo assets */
+      @font-face {
+        font-family: "Satoshi";
+        src: url("../documind/frontend/public/fonts/Satoshi-Light.otf")
+          format("opentype");
+        font-weight: 300;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Satoshi";
+        src: url("../documind/frontend/public/fonts/Satoshi-Regular.otf")
+          format("opentype");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Satoshi";
+        src: url("../documind/frontend/public/fonts/Satoshi-Medium.otf")
+          format("opentype");
+        font-weight: 500;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Satoshi";
+        src: url("../documind/frontend/public/fonts/Satoshi-Bold.otf")
+          format("opentype");
+        font-weight: 700;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Satoshi";
+        src: url("../documind/frontend/public/fonts/Satoshi-Black.otf")
+          format("opentype");
+        font-weight: 900;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Satoshi";
+        src: url("../documind/frontend/public/fonts/Satoshi-Italic.otf")
+          format("opentype");
+        font-weight: 400;
+        font-style: italic;
+      }
+      @font-face {
+        font-family: "Satoshi";
+        src: url("../documind/frontend/public/fonts/Satoshi-BoldItalic.otf")
+          format("opentype");
+        font-weight: 700;
+        font-style: italic;
+      }
+
+      :root {
+        color-scheme: light;
+        --ink-950: #0d1115;
+        --ink-900: #151a1f;
+        --ink-700: #2a3139;
+        --ink-500: #6b6b6b;
+        --paper: #f6f7f8;
+        --white: #ffffff;
+
+        --brand-primary-light: #016239;
+        --brand-secondary-light: #3d8c6a;
+        --brand-accent-light: #c4875c;
+        --brand-muted-light: #6b6b6b;
+
+        --brand-primary-dark: #10b981;
+        --brand-secondary-dark: #34d399;
+        --brand-accent-dark: #ffcba4;
+        --brand-muted-dark: #a0a0a0;
+
+        --surface-light: #f8f8f8;
+        --surface-dark: #111111;
+        --border-light: rgba(0, 0, 0, 0.08);
+        --border-dark: rgba(255, 255, 255, 0.08);
+
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 16px;
+        --radius-xl: 24px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: "Satoshi", "Avenir Next", "Segoe UI", sans-serif;
+        color: var(--ink-900);
+        background:
+          radial-gradient(circle at 10% 0%, #dcefe6 0, transparent 34%),
+          radial-gradient(circle at 100% 10%, #f0e4da 0, transparent 26%),
+          linear-gradient(160deg, #f8faf9 0%, #eff2f3 100%);
+        line-height: 1.45;
+      }
+
+      .container {
+        width: min(1200px, calc(100% - 48px));
+        margin: 0 auto 64px;
+      }
+
+      .hero {
+        margin-top: 28px;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-xl);
+        background:
+          linear-gradient(140deg, rgba(1, 98, 57, 0.1), rgba(1, 98, 57, 0) 50%),
+          linear-gradient(25deg, rgba(196, 135, 92, 0.12), rgba(196, 135, 92, 0) 40%),
+          var(--white);
+        padding: 28px;
+        box-shadow:
+          0 1px 1px rgba(9, 18, 26, 0.04),
+          0 18px 40px rgba(9, 18, 26, 0.08);
+      }
+
+      .hero-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 24px;
+      }
+
+      .logo-wordmark {
+        width: 220px;
+        max-width: 100%;
+      }
+
+      .subtitle {
+        max-width: 760px;
+        color: #33414c;
+        margin: 12px 0 0;
+        font-size: 17px;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .meta-card {
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        background: rgba(255, 255, 255, 0.72);
+        padding: 12px;
+      }
+
+      .meta-card h4 {
+        margin: 0 0 4px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #51606d;
+        font-weight: 500;
+      }
+
+      .meta-card p {
+        margin: 0;
+        font-size: 14px;
+        color: #1f2b35;
+      }
+
+      section {
+        margin-top: 18px;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        background: rgba(255, 255, 255, 0.88);
+        backdrop-filter: blur(1px);
+        padding: 22px;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(34px, 4vw, 52px);
+        line-height: 1.05;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      h2 {
+        font-size: clamp(22px, 2.2vw, 30px);
+        margin-bottom: 8px;
+        line-height: 1.15;
+      }
+
+      h3 {
+        font-size: 17px;
+        margin-bottom: 10px;
+      }
+
+      p {
+        margin: 8px 0 0;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .small-note {
+        color: #4b5967;
+        font-size: 13px;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .card {
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        background: var(--white);
+      }
+
+      .card-inner {
+        padding: 12px;
+      }
+
+      .token-card {
+        min-height: 140px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .token-swatch {
+        height: 78px;
+        border-radius: 8px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+
+      .token-name {
+        margin-top: 8px;
+        font-size: 13px;
+        color: #374450;
+      }
+
+      .token-value {
+        margin-top: 3px;
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        font-size: 12px;
+      }
+
+      .logo-stage-light,
+      .logo-stage-dark {
+        min-height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+
+      .logo-stage-light {
+        background: #f5f8f7;
+      }
+
+      .logo-stage-dark {
+        background:
+          radial-gradient(circle at 12% 12%, #19342b 0, transparent 45%),
+          linear-gradient(145deg, #0f151a, #111111);
+      }
+
+      .logo-stage-dark img {
+        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+      }
+
+      .pill {
+        display: inline-block;
+        border: 1px solid var(--border-light);
+        border-radius: 999px;
+        padding: 4px 10px;
+        margin: 0 8px 8px 0;
+        font-size: 12px;
+        color: #334352;
+        background: #f7faf9;
+      }
+
+      .type-line {
+        margin-top: 6px;
+        border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+        padding-bottom: 10px;
+      }
+
+      .sample {
+        margin-top: 4px;
+      }
+
+      .w-300 {
+        font-weight: 300;
+      }
+
+      .w-400 {
+        font-weight: 400;
+      }
+
+      .w-500 {
+        font-weight: 500;
+      }
+
+      .w-700 {
+        font-weight: 700;
+      }
+
+      .w-900 {
+        font-weight: 900;
+      }
+
+      .photo {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: #eceff0;
+      }
+
+      .asset-caption {
+        margin: 0;
+        font-size: 12px;
+        color: #51606d;
+      }
+
+      .asset-path {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 11px;
+        color: #3d556f;
+        background: #eef4f8;
+        border-radius: 6px;
+        padding: 3px 6px;
+      }
+
+      .bg-demo {
+        height: 150px;
+        border-radius: 12px;
+        border: 1px solid var(--border-light);
+      }
+
+      .bg-a {
+        background:
+          radial-gradient(circle at 14% 16%, rgba(16, 185, 129, 0.3), transparent 48%),
+          linear-gradient(165deg, #f8fbfa, #ebf4f0);
+      }
+
+      .bg-b {
+        background:
+          linear-gradient(140deg, rgba(1, 98, 57, 0.9), rgba(2, 132, 78, 0.96)),
+          linear-gradient(0deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1));
+      }
+
+      .bg-c {
+        background:
+          radial-gradient(circle at 20% 20%, #1b2b24 0, transparent 35%),
+          radial-gradient(circle at 80% 80%, #3d8c6a 0, transparent 45%),
+          #101615;
+      }
+
+      .bg-d {
+        background-image:
+          linear-gradient(45deg, rgba(1, 98, 57, 0.16) 25%, transparent 25%),
+          linear-gradient(-45deg, rgba(1, 98, 57, 0.16) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, rgba(1, 98, 57, 0.16) 75%),
+          linear-gradient(-45deg, transparent 75%, rgba(1, 98, 57, 0.16) 75%);
+        background-size: 24px 24px;
+        background-position:
+          0 0,
+          0 12px,
+          12px -12px,
+          -12px 0;
+        background-color: #f2f7f4;
+      }
+
+      .shot-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .shot {
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .shot img {
+        width: 100%;
+        height: 95px;
+        object-fit: cover;
+        display: block;
+      }
+
+      .shot p {
+        margin: 0;
+        padding: 6px 8px;
+        font-size: 11px;
+        color: #445667;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+        padding: 9px 8px;
+      }
+
+      th {
+        font-size: 12px;
+        color: #4c5e70;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      code {
+        font-family: "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
+        font-size: 12px;
+      }
+
+      .rule-box {
+        background: #f8fafb;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 10px;
+        padding: 12px;
+      }
+
+      ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+
+      li {
+        margin-top: 4px;
+      }
+
+      .footer-note {
+        margin: 16px 0 0;
+        color: #4b5967;
+        font-size: 12px;
+      }
+
+      @media (max-width: 980px) {
+        .container {
+          width: calc(100% - 24px);
+        }
+        .meta {
+          grid-template-columns: 1fr;
+        }
+        .grid-2,
+        .grid-3,
+        .grid-4 {
+          grid-template-columns: 1fr;
+        }
+        .shot-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media print {
+        @page {
+          size: A4;
+          margin: 14mm;
+        }
+
+        body {
+          background: #fff;
+          color: #111;
+        }
+
+        .container {
+          width: 100%;
+          margin: 0;
+        }
+
+        section,
+        .hero,
+        .card {
+          break-inside: avoid;
+          box-shadow: none;
+          backdrop-filter: none;
+        }
+
+        .hero {
+          margin-top: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="hero">
+        <div class="hero-top">
+          <div>
+            <h1>DocuMind Brand Kit</h1>
+            <p class="subtitle">
+              Single-file, export-ready visual reference for launch content.
+              Includes color tokens, typography, logo usage, image system, backgrounds,
+              and an asset inventory from the current repository.
+            </p>
+          </div>
+          <img
+            class="logo-wordmark"
+            src="../documind/frontend/public/images/logo.png"
+            alt="DocuMind logo"
+          />
+        </div>
+        <div class="meta">
+          <div class="meta-card">
+            <h4>Primary Font</h4>
+            <p>Satoshi (Light, Regular, Medium, Bold, Black + italics)</p>
+          </div>
+          <div class="meta-card">
+            <h4>Core Palette</h4>
+            <p>Forest green, mint highlights, neutral ink, warm accent</p>
+          </div>
+          <div class="meta-card">
+            <h4>Export Usage</h4>
+            <p>Open in browser and Print to PDF for launch references.</p>
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <div class="section-header">
+          <h2>1. Logo System</h2>
+          <div class="small-note">Use with generous spacing and high contrast</div>
+        </div>
+        <div class="grid-2">
+          <article class="card">
+            <div class="logo-stage-light">
+              <img
+                src="../documind/frontend/public/images/logo.png"
+                alt="Logo on light"
+                style="max-width: 85%; max-height: 100px"
+              />
+            </div>
+            <div class="card-inner">
+              <h3>Primary Logo on Light</h3>
+              <p class="asset-caption">
+                Brand-safe for documents, deck covers, and one-page marketing.
+              </p>
+              <span class="asset-path">../documind/frontend/public/images/logo.png</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="logo-stage-dark">
+              <img
+                src="../documind/frontend/public/images/logo.png"
+                alt="Logo on dark"
+                style="max-width: 85%; max-height: 100px"
+              />
+            </div>
+            <div class="card-inner">
+              <h3>Logo on Dark Backgrounds</h3>
+              <p class="asset-caption">
+                Keep contrast high; avoid clutter directly behind the mark.
+              </p>
+              <span class="asset-path">Use same source PNG</span>
+            </div>
+          </article>
+        </div>
+        <div style="margin-top: 12px">
+          <span class="pill">Clear space: at least 0.5x logo height</span>
+          <span class="pill">Do not stretch or skew the mark</span>
+          <span class="pill">Use original asset colors only</span>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>2. Color System</h2>
+          <div class="small-note">Extracted from app theme tokens</div>
+        </div>
+        <h3>Light Mode Brand Tokens</h3>
+        <div class="grid-4">
+          <article class="card token-card card-inner">
+            <div class="token-swatch" style="background:#016239"></div>
+            <div class="token-name">Primary</div>
+            <div class="token-value">#016239</div>
+          </article>
+          <article class="card token-card card-inner">
+            <div class="token-swatch" style="background:#3d8c6a"></div>
+            <div class="token-name">Secondary</div>
+            <div class="token-value">#3D8C6A</div>
+          </article>
+          <article class="card token-card card-inner">
+            <div class="token-swatch" style="background:#c4875c"></div>
+            <div class="token-name">Accent</div>
+            <div class="token-value">#C4875C</div>
+          </article>
+          <article class="card token-card card-inner">
+            <div class="token-swatch" style="background:#6b6b6b"></div>
+            <div class="token-name">Muted</div>
+            <div class="token-value">#6B6B6B</div>
+          </article>
+        </div>
+
+        <h3 style="margin-top: 16px">Dark Mode Brand Tokens</h3>
+        <div class="grid-4">
+          <article class="card token-card card-inner">
+            <div class="token-swatch" style="background:#10b981"></div>
+            <div class="token-name">Primary (Dark)</div>
+            <div class="token-value">#10B981</div>
+          </article>
+          <article class="card token-card card-inner">
+            <div class="token-swatch" style="background:#34d399"></div>
+            <div class="token-name">Secondary (Dark)</div>
+            <div class="token-value">#34D399</div>
+          </article>
+          <article class="card token-card card-inner">
+            <div class="token-swatch" style="background:#ffcba4"></div>
+            <div class="token-name">Accent (Dark)</div>
+            <div class="token-value">#FFCBA4</div>
+          </article>
+          <article class="card token-card card-inner">
+            <div class="token-swatch" style="background:#a0a0a0"></div>
+            <div class="token-name">Muted (Dark)</div>
+            <div class="token-value">#A0A0A0</div>
+          </article>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Light Value</th>
+              <th>Dark Value</th>
+              <th>Usage</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>--background</code></td>
+              <td><code>#ffffff</code></td>
+              <td><code>#0d0d0d</code></td>
+              <td>Page and app surface backdrop</td>
+            </tr>
+            <tr>
+              <td><code>--card</code></td>
+              <td><code>#f8f8f8</code></td>
+              <td><code>#111111</code></td>
+              <td>Containers, blocks, and cards</td>
+            </tr>
+            <tr>
+              <td><code>--primary</code></td>
+              <td><code>#016239</code></td>
+              <td><code>#10b981</code></td>
+              <td>Core brand callouts and highlights</td>
+            </tr>
+            <tr>
+              <td><code>--border</code></td>
+              <td><code>rgba(0,0,0,0.08)</code></td>
+              <td><code>rgba(255,255,255,0.08)</code></td>
+              <td>Subtle separators and outlines</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>3. Typography</h2>
+          <div class="small-note">Primary family: Satoshi</div>
+        </div>
+        <div class="grid-2">
+          <article class="card card-inner">
+            <h3>Font Families</h3>
+            <p class="type-line">
+              <strong>Sans:</strong> <code>"Satoshi", "Avenir Next", "Segoe UI", sans-serif</code>
+            </p>
+            <p class="type-line">
+              <strong>Mono:</strong>
+              <code>"JetBrains Mono", "SFMono-Regular", Menlo, monospace</code>
+            </p>
+            <p class="small-note">
+              Brand UI and marketing copy should stay on Satoshi for consistency.
+            </p>
+          </article>
+          <article class="card card-inner">
+            <h3>Type Scale Reference</h3>
+            <p><strong>Display:</strong> 52/56</p>
+            <p><strong>H1:</strong> 36/42</p>
+            <p><strong>H2:</strong> 28/34</p>
+            <p><strong>Body:</strong> 16/24</p>
+            <p><strong>Caption:</strong> 12/16</p>
+            <p class="small-note">Tracking: 0 to -0.02em for headlines</p>
+          </article>
+        </div>
+
+        <article class="card card-inner" style="margin-top: 12px">
+          <h3>Weight Specimen</h3>
+          <p class="sample w-300">Satoshi Light 300 - Turn private docs into usable answers.</p>
+          <p class="sample w-400">Satoshi Regular 400 - Turn private docs into usable answers.</p>
+          <p class="sample w-500">Satoshi Medium 500 - Turn private docs into usable answers.</p>
+          <p class="sample w-700">Satoshi Bold 700 - Turn private docs into usable answers.</p>
+          <p class="sample w-900">Satoshi Black 900 - Turn private docs into usable answers.</p>
+          <p class="sample" style="font-style: italic">
+            Satoshi Italic - For selective emphasis only.
+          </p>
+        </article>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>4. Photography</h2>
+          <div class="small-note">Current photo assets in repository</div>
+        </div>
+        <div class="grid-3">
+          <article class="card">
+            <img
+              class="photo"
+              src="../documind/frontend/public/placeholder-user.jpg"
+              alt="User photography placeholder"
+            />
+            <div class="card-inner">
+              <h3>People / Profile</h3>
+              <p class="asset-caption">
+                Use for team or testimonial placeholders when no custom photo is available.
+              </p>
+              <span class="asset-path">../documind/frontend/public/placeholder-user.jpg</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <img
+              class="photo"
+              src="../documind/frontend/public/placeholder.jpg"
+              alt="General placeholder photo"
+            />
+            <div class="card-inner">
+              <h3>General Placeholder</h3>
+              <p class="asset-caption">
+                Neutral filler image for draft layouts and temporary states.
+              </p>
+              <span class="asset-path">../documind/frontend/public/placeholder.jpg</span>
+            </div>
+          </article>
+
+          <article class="card">
+            <img
+              class="photo"
+              src="../documind/frontend/public/screenshot/ss-9.png"
+              alt="UI screenshot visual style"
+            />
+            <div class="card-inner">
+              <h3>Product Visuals</h3>
+              <p class="asset-caption">
+                Product screenshots serve as primary launch visuals.
+              </p>
+              <span class="asset-path">../documind/frontend/public/screenshot/ss-9.png</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>5. Illustration &amp; Diagrams</h2>
+          <div class="small-note">Vector and conceptual assets</div>
+        </div>
+        <div class="grid-2">
+          <article class="card">
+            <img
+              class="photo"
+              src="../documind/documentation/public/images/arch-light.svg"
+              alt="Architecture illustration light"
+              style="height: 240px; object-fit: contain; background: #fff"
+            />
+            <div class="card-inner">
+              <h3>Architecture Illustration (Light)</h3>
+              <span class="asset-path">../documind/documentation/public/images/arch-light.svg</span>
+            </div>
+          </article>
+          <article class="card">
+            <img
+              class="photo"
+              src="../documind/documentation/public/images/arch-dark.svg"
+              alt="Architecture illustration dark"
+              style="height: 240px; object-fit: contain; background: #0d0d0d"
+            />
+            <div class="card-inner">
+              <h3>Architecture Illustration (Dark)</h3>
+              <span class="asset-path">../documind/documentation/public/images/arch-dark.svg</span>
+            </div>
+          </article>
+        </div>
+        <div class="grid-2">
+          <article class="card">
+            <img
+              class="photo"
+              src="../documind/frontend/public/placeholder-logo.svg"
+              alt="Placeholder logo vector"
+              style="height: 170px; object-fit: contain; background: #ffffff"
+            />
+            <div class="card-inner">
+              <h3>Logo Placeholder (SVG)</h3>
+              <span class="asset-path">../documind/frontend/public/placeholder-logo.svg</span>
+            </div>
+          </article>
+          <article class="card">
+            <img
+              class="photo"
+              src="../documind/frontend/public/placeholder.svg"
+              alt="Placeholder vector"
+              style="height: 170px; object-fit: contain; background: #f8f8f8"
+            />
+            <div class="card-inner">
+              <h3>Generic Placeholder (SVG)</h3>
+              <span class="asset-path">../documind/frontend/public/placeholder.svg</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>6. Background Treatments</h2>
+          <div class="small-note">Brand-consistent page and slide backdrops</div>
+        </div>
+        <div class="grid-4">
+          <article class="card card-inner">
+            <div class="bg-demo bg-a"></div>
+            <p class="asset-caption"><strong>Soft Mint Atmosphere</strong></p>
+            <p class="asset-caption">Landing pages, docs, and one-pagers</p>
+          </article>
+          <article class="card card-inner">
+            <div class="bg-demo bg-b"></div>
+            <p class="asset-caption"><strong>Primary Green Gradient</strong></p>
+            <p class="asset-caption">Hero banners and title cards</p>
+          </article>
+          <article class="card card-inner">
+            <div class="bg-demo bg-c"></div>
+            <p class="asset-caption"><strong>Dark Product Stage</strong></p>
+            <p class="asset-caption">Screenshot showcases and demo sections</p>
+          </article>
+          <article class="card card-inner">
+            <div class="bg-demo bg-d"></div>
+            <p class="asset-caption"><strong>Subtle Pattern Grid</strong></p>
+            <p class="asset-caption">Infographics and comparison layouts</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>7. Product UI Reference Gallery</h2>
+          <div class="small-note">All current screenshot assets</div>
+        </div>
+        <div class="shot-grid">
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-1.png" alt="Screenshot 1" /><p>ss-1.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-2.png" alt="Screenshot 2" /><p>ss-2.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-3.png" alt="Screenshot 3" /><p>ss-3.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-4.png" alt="Screenshot 4" /><p>ss-4.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-5.png" alt="Screenshot 5" /><p>ss-5.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-6.png" alt="Screenshot 6" /><p>ss-6.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-7.png" alt="Screenshot 7" /><p>ss-7.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-8.png" alt="Screenshot 8" /><p>ss-8.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-9.png" alt="Screenshot 9" /><p>ss-9.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-10.png" alt="Screenshot 10" /><p>ss-10.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-11.png" alt="Screenshot 11" /><p>ss-11.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-12.png" alt="Screenshot 12" /><p>ss-12.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-13.png" alt="Screenshot 13" /><p>ss-13.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-14.png" alt="Screenshot 14" /><p>ss-14.png</p></article>
+          <article class="shot"><img src="../documind/frontend/public/screenshot/ss-15.png" alt="Screenshot 15" /><p>ss-15.png</p></article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>8. Other Brand Rules</h2>
+          <div class="small-note">Spacing, shape, motion, and tone</div>
+        </div>
+        <div class="grid-3">
+          <article class="rule-box">
+            <h3>Voice &amp; Tone</h3>
+            <ul>
+              <li>Direct, technical, and concise.</li>
+              <li>Avoid hype-heavy claims; lead with clear value.</li>
+              <li>Use plain language for workflows and outcomes.</li>
+            </ul>
+          </article>
+          <article class="rule-box">
+            <h3>Shape Language</h3>
+            <ul>
+              <li>Primary radius: <code>0.5rem</code> for UI components.</li>
+              <li>Cards: 10px to 16px corner radius for marketing layouts.</li>
+              <li>Use subtle borders over heavy outlines.</li>
+            </ul>
+          </article>
+          <article class="rule-box">
+            <h3>Motion</h3>
+            <ul>
+              <li>Short, smooth transitions (150ms to 220ms).</li>
+              <li>Prefer fade/slide over bouncy effects.</li>
+              <li>Highlight state changes, not decoration.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>9. Asset Inventory (Repo Paths)</h2>
+          <div class="small-note">Use these paths for launch content production</div>
+        </div>
+
+        <h3>Typography Files</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Path</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Satoshi Light</td><td><code>documind/frontend/public/fonts/Satoshi-Light.otf</code></td></tr>
+            <tr><td>Satoshi Regular</td><td><code>documind/frontend/public/fonts/Satoshi-Regular.otf</code></td></tr>
+            <tr><td>Satoshi Medium</td><td><code>documind/frontend/public/fonts/Satoshi-Medium.otf</code></td></tr>
+            <tr><td>Satoshi Bold</td><td><code>documind/frontend/public/fonts/Satoshi-Bold.otf</code></td></tr>
+            <tr><td>Satoshi Black</td><td><code>documind/frontend/public/fonts/Satoshi-Black.otf</code></td></tr>
+            <tr><td>Satoshi Italic</td><td><code>documind/frontend/public/fonts/Satoshi-Italic.otf</code></td></tr>
+            <tr><td>Satoshi Bold Italic</td><td><code>documind/frontend/public/fonts/Satoshi-BoldItalic.otf</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top: 16px">Logo, Icon, and Illustration Files</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Asset Type</th>
+              <th>Path</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Primary Logo</td><td><code>documind/frontend/public/images/logo.png</code></td></tr>
+            <tr><td>Architecture (Light)</td><td><code>documind/documentation/public/images/arch-light.svg</code></td></tr>
+            <tr><td>Architecture (Dark)</td><td><code>documind/documentation/public/images/arch-dark.svg</code></td></tr>
+            <tr><td>Placeholder Logo (SVG)</td><td><code>documind/frontend/public/placeholder-logo.svg</code></td></tr>
+            <tr><td>Placeholder Logo (PNG)</td><td><code>documind/frontend/public/placeholder-logo.png</code></td></tr>
+            <tr><td>Android Icon 192</td><td><code>documind/frontend/public/android-chrome-192x192.png</code></td></tr>
+            <tr><td>Android Icon 512</td><td><code>documind/frontend/public/android-chrome-512x512.png</code></td></tr>
+            <tr><td>Apple Touch Icon</td><td><code>documind/frontend/public/apple-touch-icon.png</code></td></tr>
+            <tr><td>Favicon 16</td><td><code>documind/frontend/public/favicon-16x16.png</code></td></tr>
+            <tr><td>Favicon 32</td><td><code>documind/frontend/public/favicon-32x32.png</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin-top: 16px">Photography and Screenshot Files</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Path Pattern</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>User Photo Placeholder</td><td><code>documind/frontend/public/placeholder-user.jpg</code></td></tr>
+            <tr><td>General Photo Placeholder</td><td><code>documind/frontend/public/placeholder.jpg</code></td></tr>
+            <tr><td>UI Screenshots</td><td><code>documind/frontend/public/screenshot/ss-1.png ... ss-15.png</code></td></tr>
+          </tbody>
+        </table>
+
+        <p class="footer-note">
+          Source token references: <code>documind/documentation/app/globals.css</code> and
+          <code>documind/frontend/app/globals.css</code>.
+        </p>
+      </section>
+    </div>
+  </body>
+</html>
