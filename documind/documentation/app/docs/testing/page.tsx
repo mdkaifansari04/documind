@@ -11,6 +11,27 @@ export default function TestingPage() {
       description="Real test notes from running the system: what we executed, what we saw, and what still needs cleanup."
       breadcrumbs={[{ label: 'Docs', href: '/docs' }, { label: 'Testing & Validation' }]}
     >
+      <section id="testing-demo" className="mb-12">
+        <h2 className="text-xl font-semibold text-foreground mb-4">
+          Documind Testing Demo
+        </h2>
+        <p className="text-muted-foreground leading-relaxed mb-6">
+          Watch the complete testing demonstration of the Documind application from setup through validation.
+        </p>
+
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="relative aspect-video w-full">
+            <iframe
+              src="https://www.youtube.com/embed/RRl9HTGw0Sk"
+              title="Documind Testing Demo"
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      </section>
+
       {testingSections.map((section, sectionIndex) => (
         <section key={section.id} id={section.id} className="mb-12">
           <div className="overflow-hidden rounded-2xl border border-border bg-card">

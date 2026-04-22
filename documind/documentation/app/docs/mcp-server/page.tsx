@@ -12,6 +12,27 @@ export default function MCPServerPage() {
       description="DocuMind as tools for AI clients: search, ask, ingest, and context management with guardrails baked in."
       breadcrumbs={[{ label: 'Docs', href: '/docs' }, { label: 'MCP Server' }]}
     >
+      <section id="mcp-demo" className="mb-12">
+        <h2 className="text-xl font-semibold text-foreground mb-4">
+          MCP Server Testing Demo
+        </h2>
+        <p className="text-muted-foreground leading-relaxed mb-6">
+          Watch the MCP server in action with AI client integration and see how tools interact with DocuMind.
+        </p>
+
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="relative aspect-video w-full">
+            <iframe
+              src="https://www.youtube.com/embed/7vh292qzmPY"
+              title="MCP Server Testing Demo"
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      </section>
+
       <section id="setup" className="mb-12">
         <h2 className="text-xl font-semibold text-foreground mb-4">Setup & Run</h2>
         <p className="text-muted-foreground leading-relaxed mb-6">
