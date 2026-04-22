@@ -32,6 +32,7 @@ class Settings:
     llm_balanced_model: str = os.getenv("LLM_BALANCED_MODEL", "gpt-4o-mini")
     llm_quality_model: str = os.getenv("LLM_QUALITY_MODEL", "gpt-4o")
     openai_timeout_seconds: float = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "10"))
+    llm_fallback_on_error: bool = _env_bool("LLM_FALLBACK_ON_ERROR", False)
 
     control_db_provider: str = os.getenv("CONTROL_DB_PROVIDER", "sqlite")
     sqlite_path: str = os.getenv("SQLITE_PATH", str(BASE_DIR / "documind.db"))

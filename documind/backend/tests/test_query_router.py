@@ -5,8 +5,11 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
+from fastapi import HTTPException
+
 from app.routing import LLMProfile
 from app.routers.query import QueryRouter
+from app.services.agent import UpstreamLLMError
 from app.models.schemas import (
     AdvancedQueryRequest,
     AdvancedSearchRequest,
@@ -215,6 +218,49 @@ class QueryRouterTests(unittest.TestCase):
 
         self.assertEqual(response["mode"], "hybrid")
         fake_retrieval.search_knowledge_base_hybrid.assert_called_once()
+
+    def test_query_by_instance_returns_502_when_upstream_llm_fails(self) -> None:
+        fake_store = MagicMock()
+        fake_store.find_kb_by_namespace.return_value = {
+            "id": "kb-err",
+            "collection_name": "kb_collection_err",
+            "embedding_model": "minilm",
+            "llm_profile": "balanced",
+        }
+        fake_store.create_query_log.return_value = {}
+
+        fake_retrieval = MagicMock()
+        fake_retrieval.search_knowledge_base.return_value = [
+            {"id": 1, "text": "chunk", "score": 0.9, "source_ref": "x", "chunk_index": 0, "resource_id": "r"}
+        ]
+
+        fake_routing = MagicMock()
+        fake_routing.recommend_llm_profile.return_value = LLMProfile.BALANCED
+
+        fake_agent = MagicMock()
+        fake_agent.answer.side_effect = UpstreamLLMError("OpenAI request failed: APIConnectionError: Connection error.")
+
+        fake_container = SimpleNamespace(
+            store=fake_store,
+            retrieval=fake_retrieval,
+            routing=fake_routing,
+            agent=fake_agent,
+        )
+
+        body = InstanceScopedQueryRequest(
+            instance_id="inst-1",
+            namespace_id="company_docs",
+            question="how do we deploy",
+            top_k=2,
+        )
+        router = QueryRouter()
+
+        with patch("app.routers.query.container", fake_container):
+            with self.assertRaises(HTTPException) as exc:
+                asyncio.run(router.query_by_instance(body))
+
+        self.assertEqual(exc.exception.status_code, 502)
+        self.assertIn("OpenAI request failed", str(exc.exception.detail))
 
     def test_query_advanced(self) -> None:
         fake_store = MagicMock()

@@ -188,9 +188,9 @@ export default function SearchPage() {
         description={`Search within ${activeInstanceName} / ${activeNamespaceId}`}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
         {/* Search Form */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card className="border-white/6 bg-[#111]">
             <CardContent className="pt-5">
               <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -437,7 +437,7 @@ export default function SearchPage() {
         </div>
 
         {/* Results */}
-        <Card className="h-fit border-white/6 bg-[#111] lg:sticky lg:top-20">
+        <Card className="h-fit min-w-0 border-white/6 bg-[#111] lg:sticky lg:top-20">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-white">
               Results ({results.length})
@@ -447,16 +447,16 @@ export default function SearchPage() {
             {isSearching ? (
               <CardStackSkeleton items={3} />
             ) : results.length > 0 ? (
-              <ScrollArea className="h-[500px] pr-4">
-                <div className="space-y-3">
+              <ScrollArea className="h-[500px] min-w-0 overflow-x-hidden pr-4">
+                <div className="min-w-0 max-w-full space-y-3 pr-1">
                   {results.map((result, index) => (
                     <div
                       key={result.id}
-                      className="rounded-lg border border-white/6 bg-[#141414] p-3 transition-colors duration-150 hover:bg-white/4"
+                      className="min-w-0 overflow-hidden rounded-lg border border-white/6 bg-[#141414] p-3 transition-colors duration-150 hover:bg-white/4"
                       style={{ animationDelay: `${index * 0.04}s` }}
                     >
                       <div className="mb-2 flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
                           <FileText
                             className="h-3.5 w-3.5 shrink-0 text-muted-foreground/35"
                             strokeWidth={1.5}
@@ -470,7 +470,7 @@ export default function SearchPage() {
                         </Badge>
                       </div>
                       <div className="mb-2 flex flex-wrap gap-1.5">
-                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
+                        <Badge className="min-w-0 max-w-full whitespace-normal break-all border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
                           {result.namespace_id}
                         </Badge>
                         <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
@@ -478,7 +478,7 @@ export default function SearchPage() {
                         </Badge>
                       </div>
                       <p
-                        className={`text-xs text-muted-foreground/45 ${
+                        className={`text-xs break-all whitespace-pre-wrap text-muted-foreground/45 ${
                           expandedResults.has(result.id)
                             ? ''
                             : 'line-clamp-3'

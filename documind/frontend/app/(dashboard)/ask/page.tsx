@@ -423,9 +423,9 @@ export default function AskPage() {
         description={`Ask questions about ${activeInstanceName} / ${activeNamespaceId}`}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)]">
         {/* Question Form */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <Card className="border-white/6 bg-[#111]">
             <CardContent className="pt-5">
               <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -724,7 +724,7 @@ export default function AskPage() {
         </div>
 
         {/* Sources Panel */}
-        <Card className="h-fit border-white/6 bg-[#111] lg:sticky lg:top-20">
+        <Card className="h-fit min-w-0 border-white/6 bg-[#111] lg:sticky lg:top-20">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-white">
               Sources ({response?.sources?.length ?? 0})
@@ -737,13 +737,13 @@ export default function AskPage() {
             {isAsking ? (
               <CardStackSkeleton items={3} />
             ) : response?.sources && response.sources.length > 0 ? (
-              <ScrollArea className="h-[500px] pr-4">
-                <div className="space-y-3 pr-1">
+              <ScrollArea className="h-[500px] min-w-0 overflow-x-hidden pr-4">
+                <div className="min-w-0 max-w-full space-y-3 pr-1">
                   {response.sources.map((source, index) => (
                     <div
                       key={source.id}
-                      className="overflow-hidden rounded-lg border border-white/6 bg-[#141414] p-3 transition-colors duration-150 hover:bg-white/4"
-                      style={{ animationDelay: `${index * 0.04}s` }}
+                      className="min-w-0 overflow-hidden rounded-lg border border-white/6 bg-[#141414] p-3 transition-colors duration-150 hover:bg-white/4"
+                      // style={{ animationDelay: `${index * 0.04}s` }}
                     >
                       <div className="mb-2 flex items-start justify-between gap-2">
                         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -760,7 +760,7 @@ export default function AskPage() {
                         </Badge>
                       </div>
                       <div className="mb-2 flex flex-wrap gap-1.5">
-                        <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
+                        <Badge className="min-w-0 max-w-full whitespace-normal break-all border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">
                           {source.namespace_id}
                         </Badge>
                         <Badge className="border border-white/6 bg-white/3 text-[10px] text-muted-foreground/60">

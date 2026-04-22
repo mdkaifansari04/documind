@@ -16,6 +16,7 @@ from app.models.schemas import (
     SearchRequest,
 )
 from app.runtime import container
+from app.services.agent import UpstreamLLMError
 
 
 class QueryRouter:
@@ -76,6 +77,23 @@ class QueryRouter:
             filters=filters,
         )
 
+    @staticmethod
+    async def _generate_answer(
+        *,
+        question: str,
+        sources: list[dict[str, Any]],
+        llm_profile,
+    ) -> str:
+        try:
+            return await asyncio.to_thread(
+                container.agent.answer,
+                question=question,
+                sources=sources,
+                llm_profile=llm_profile,
+            )
+        except UpstreamLLMError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+
     async def search(self, body: SearchRequest):
         kb = container.store.get_knowledge_base(body.kb_id)
         if not kb:
@@ -129,8 +147,7 @@ class QueryRouter:
             retrieved_source_count=len(sources),
             latency_sensitive=body.latency_sensitive,
         )
-        answer = await asyncio.to_thread(
-            container.agent.answer,
+        answer = await self._generate_answer(
             question=body.question,
             sources=sources,
             llm_profile=llm_profile,
@@ -173,8 +190,7 @@ class QueryRouter:
             retrieved_source_count=len(sources),
             latency_sensitive=body.latency_sensitive,
         )
-        answer = await asyncio.to_thread(
-            container.agent.answer,
+        answer = await self._generate_answer(
             question=body.question,
             sources=sources,
             llm_profile=llm_profile,
@@ -240,8 +256,7 @@ class QueryRouter:
             retrieved_source_count=len(sources),
             latency_sensitive=body.latency_sensitive,
         )
-        answer = await asyncio.to_thread(
-            container.agent.answer,
+        answer = await self._generate_answer(
             question=body.question,
             sources=sources,
             llm_profile=llm_profile,
