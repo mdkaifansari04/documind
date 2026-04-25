@@ -1,6 +1,6 @@
 # Vector AI - DocuMind
 
-Last updated: 2026-04-23
+Last updated: 2026-04-25
 
 DocuMind is a document intelligence stack built on top of Actian VectorAI DB.  
 This repository currently includes:
@@ -76,6 +76,26 @@ This repository currently includes:
 └── docs/                      # project notes, plans, runbooks
 ```
 
+## Agentic Development Standard
+
+Start every AI-agent session with:
+
+1. `AGENTS.md` (global contract)
+2. `TODOS.md` (active queue)
+3. `DECISIONS.md` (current constraints)
+4. nearest scoped `AGENTS.md` for touched files
+5. `COMMIT.md` before creating commits
+
+Compatibility surfaces:
+- `CLAUDE.md` for Claude-based workflows
+- `.github/copilot-instructions.md` for Copilot
+
+Validation command:
+
+```bash
+./scripts/check-doc-contracts.sh
+```
+
 ## Local quick start
 
 ### 1) Start Actian VectorAI DB
@@ -126,4 +146,4 @@ cd documind/backend
 
 ## Contributing
 
-Please see [`contribution.md`](contribution.md) for workflow, standards, and verification checklist.
+Please see [`CONTRIBUTION.md`](CONTRIBUTION.md) for workflow, standards, and verification checklist.
